@@ -27,7 +27,6 @@ setwd(current_dir)
 #---FUNCTION DEFINITION---#
 #-------------------------#
 get_subj_facs_plot <- function(subj_facs_df, subj, treatment) {
-  # print(str(subj_facs_df))
   plot <- plot_ly(subj_facs_df, 
                   x = ~TreatmentTime, 
                   y = ~F_Angry, 
@@ -44,6 +43,24 @@ get_subj_facs_plot <- function(subj_facs_df, subj, treatment) {
     layout(title = paste0(subj, ' - ', treatment),
            xaxis = get_axis_label('Time [s]'), 
            yaxis = get_axis_label('Emotion'))
+  
+  
+  plot <- layout(plot, 
+              # title = 'Highlighting with Rectangles',
+              shapes = list(
+                list(type = "rect",
+                     fillcolor = "blue", line = list(color = "blue"), opacity = 0.4,
+                     x0 = 0.0, x1 = 0.3, xref = "x",
+                     y0 = 0, y1 = 1, yref = "y"),
+                list(type = "rect",
+                     fillcolor = "green", line = list(color = "green"), opacity = 0.4,
+                     x0 = 0.4, x1 = 3, xref = "x",
+                     y0 = 0, y1 = 1, yref = "y"),
+                list(type = "rect",
+                     fillcolor = "green", line = list(color = "green"), opacity = 0.4,
+                     x0 = 0.4, x1 = 3, xref = "x",
+                     y0 = 0, y1 = 1, yref = "y")
+                ))
   
   return(plot)
 }
@@ -186,124 +203,114 @@ get_presentation_df <- function(facs_df, facs_judges_df) {
 }
 
 
+add_judges_plots <- function(judge_facs_df, subj_facs_df) {
+  # print(colnames(judge_facs_df))
+  colnames(judge_facs_df) <- c('video_time',
+                               
+                               'judge1_afraid',
+                               'judge1_angry',
+                               'judge1_disgusted',
+                               'judge1_happy',
+                               'judge1_neutral',
+                               'judge1_sad',
+                               'judge1_surprised',
+                               
+                               'judge2_afraid',
+                               'judge2_angry',
+                               'judge2_disgusted',
+                               'judge2_happy',
+                               'judge2_neutral',
+                               'judge2_sad',
+                               'judge2_surprised',
+                               
+                               'judge3_afraid',
+                               'judge3_angry',
+                               'judge3_disgusted',
+                               'judge3_happy',
+                               'judge3_neutral',
+                               'judge3_sad',
+                               'judge3_surprised',
+                               
+                               'TreatmentTime'
+                               )
+  
+  for (judge_no in c(1:3)) {
+    # print(judge_no)
+    temp_judge_facs_df <- judge_facs_df %>%
+      # select(paste0('judge', judge_no, '_afraid'))
+      select(paste0('judge', judge_no, '_afraid'),
+             paste0('judge', judge_no, '_angry'),
+             paste0('judge', judge_no, '_disgusted'),
+             paste0('judge', judge_no, '_happy'),
+             paste0('judge', judge_no, '_neutral'),
+             paste0('judge', judge_no, '_sad'),
+             paste0('judge', judge_no, '_surprised'),
+             TreatmentTime) %>% 
+      filter(TreatmentTime <= max(subj_facs_df$TreatmentTime, na.rm=T))
+    plot_list[[length(plot_list)+1]] <- get_judge_facs_plot(temp_judge_facs_df, subj, judge_no)
+  }
+  
+}
+
+
+make_gaze_data <- function(subj_facs_df) {
+  gaze_df <- as.data.frame(subj_facs_df) %>% 
+    select(G_Direction, TreatmentTime) %>% 
+    # filter(G_Direction %in% c('LEFT', 'CENTER', 'RIGHT')) %>%  ## Don't delete missing dataset
+    mutate(G_Direction_ID = rleid(G_Direction))
+  View(gaze_df)
+  
+  
+  gaze_df <- gaze_df %>% 
+    group_by(G_Direction, G_Direction_ID) %>%
+    mutate(StartTime=min(TreatmentTime),
+           EndTime=max(TreatmentTime)) %>% 
+    ungroup() %>% 
+    select(G_Direction, StartTime, EndTime) %>% 
+    distinct(G_Direction, StartTime, EndTime) %>% 
+    mutate(DiffTime=EndTime-StartTime)
+  
+  # print(str(subj_facs_df))
+  # print(str(gaze_df))
+  View(gaze_df)
+}
+
+
 
 draw_pr_facs_plots <- function(facs_df_list) {
   subj_facs_df <- as.data.frame(facs_df_list[1])
   judge_facs_df <- as.data.frame(facs_df_list[2])
-  
-  
-  # print(str(subj_facs_df))
-  # print(str(judge_facs_df))
-  # print(max(subj_facs_df$TreatmentTime, na.rm=T))
-  
-  
-  # plot_list <- list()
+
   treatment <- 'PR'
   
   # for (subj in levels(factor(facs_df$Participant_ID))) {
   for (subj in c('T005')) {
-    plot_list <- list()
+    plot_list <<- list()
     
     subj_facs_df <- subj_facs_df %>%
       filter(Participant_ID==subj) %>%
       group_by(Participant_ID) %>%
       mutate(Time=as.POSIXct(Time))
-    # View(subj_facs_df)
-    # print(str(subj_facs_df))
     # print(paste0(subj, ' - ', treatment))
     
-    plot_list[[length(plot_list)+1]] <- get_subj_facs_plot(subj_facs_df, subj, treatment)
+    
+    ###############################################################
+    # plot_list[[length(plot_list)+1]] <<- get_subj_facs_plot(subj_facs_df, subj, treatment)
+    ###############################################################
+    
+    
+    make_gaze_data(subj_facs_df)
+    
+    
+    ###############################################################
+    # add_judges_plots(judge_facs_df, subj_facs_df)
+    # 
+    # combined_plot <- subplot(plot_list, nrows=length(plot_list))
+    # print(combined_plot)
+    ###############################################################
     
     
     
-    print(class(subj_facs_df))
-    gaze_df <- as.data.frame(subj_facs_df) %>% 
-      select(G_Direction, TreatmentTime) %>% 
-      filter(G_Direction %in% c('LEFT', 'CENTER', 'RIGHT')) %>%
-      mutate(G_Direction_ID = rleid(G_Direction))
-    
-    # %>% 
-    #   ungroup() 
-    
-    # %>%
-      # group_by(G_Direction) %>% 
-      # mutate_if(is.integer, as.numeric) %>% 
-      # group_by(G_Direction, G_Direction_ID) 
-    # %>%
-      # summarize(Start=min(TreatmentTime),
-      #        End=max(TreatmentTime))
-    
-    
-    print(str(gaze_df))
-    print(str(as.data.frame(gaze_df)))
-    # View(gaze_df)
-    
-    gaze_df <- as.data.frame(gaze_df) %>% 
-      mutate(G_Direction=as.factor(G_Direction)) %>% 
-    # #   # select(G_Direction)
-    # # # %>%
-      group_by(G_Direction, G_Direction_ID) %>%
-      mutate(Start=min(TreatmentTime),
-             End=max(TreatmentTime))
-    print(str(gaze_df))
-    View(gaze_df)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # print(colnames(judge_facs_df))
-    colnames(judge_facs_df) <- c('video_time',
-
-                                 'judge1_afraid',
-                                 'judge1_angry',
-                                 'judge1_disgusted',
-                                 'judge1_happy',
-                                 'judge1_neutral',
-                                 'judge1_sad',
-                                 'judge1_surprised',
-
-                                 'judge2_afraid',
-                                 'judge2_angry',
-                                 'judge2_disgusted',
-                                 'judge2_happy',
-                                 'judge2_neutral',
-                                 'judge2_sad',
-                                 'judge2_surprised',
-
-                                 'judge3_afraid',
-                                 'judge3_angry',
-                                 'judge3_disgusted',
-                                 'judge3_happy',
-                                 'judge3_neutral',
-                                 'judge3_sad',
-                                 'judge3_surprised',
-
-                                 'TreatmentTime'
-                                 )
-    for (judge_no in c(1:3)) {
-      # print(judge_no)
-      temp_judge_facs_df <- judge_facs_df %>%
-        # select(paste0('judge', judge_no, '_afraid'))
-        select(paste0('judge', judge_no, '_afraid'),
-               paste0('judge', judge_no, '_angry'),
-               paste0('judge', judge_no, '_disgusted'),
-               paste0('judge', judge_no, '_happy'),
-               paste0('judge', judge_no, '_neutral'),
-               paste0('judge', judge_no, '_sad'),
-               paste0('judge', judge_no, '_surprised'),
-               TreatmentTime) %>% 
-        filter(TreatmentTime <= max(subj_facs_df$TreatmentTime, na.rm=T))
-      plot_list[[length(plot_list)+1]] <- get_judge_facs_plot(temp_judge_facs_df, subj, judge_no)
-    }
-
-    combined_plot <- subplot(plot_list, nrows=length(plot_list))
-    print(combined_plot)
-        
     # options(browser = 'false')
     # api_create(combined_plot, filename = paste0(subj, ' - ', treatment))
   }
@@ -316,8 +323,7 @@ draw_plots <- function() {
   ## So, during one R session we load this df once
   # facs_df <<- custom_read_csv(file.path(current_dir, data_dir, facs_gaze_speech_file_name))
   # facs_judges_df <<- custom_read_csv(file.path(current_dir, data_dir, facs_judges_file_name))
-  # print(str(facs_df))
-  # print(str(facs_judges_df))
+
   
   
   
