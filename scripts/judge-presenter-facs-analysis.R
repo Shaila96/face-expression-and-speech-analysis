@@ -394,8 +394,9 @@ draw_pr_facs_plots <- function(facs_df_list) {
   # "T151" "T157" "T166" "T175" "T178"
   
   
+  
   # for (subj in levels(factor(facs_df$Participant_ID))) {
-  for (subj in c('T021')) {
+  for (subj in c('T005')) {
     plot_list <<- list()
     
     subj_facs_df <- subj_facs_df %>%
