@@ -24,13 +24,21 @@ setwd(current_dir)
 
 
 facs_size <- 7
-emotion_list <- c('F_Angry',
+emotion_cols <- c('F_Angry',
                   'F_Disgusted',
                   'F_Afraid',
                   'F_Happy',
                   'F_Sad',
                   'F_Surprised',
                   'F_Neutral')
+
+plot_emotion_cols <- c('Angry',
+                       'Disgusted',
+                       'Afraid',
+                       'Happy',
+                       'Sad',
+                       'Surprised',
+                       'Neutral')
 
 
 #-------------------------#
@@ -42,94 +50,167 @@ read_data <- function() {
   facs_df <<- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>% 
     mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
   
-  print(str(facs_df))
+  # print(str(facs_df))
   
   return(facs_df)
 }
 
-make_matrix_data <- function(facs_df) {
-  final_matrix = matrix(0, facs_size, facs_size)  ## initialize matrix with all 0
-
-  # for (subj in levels(factor(facs_df$Participant_ID))) {
-  for (subj in c('T005')) {
+draw_heat_map_plot <- function(heat_map_df, plot_title) {
+  
+  heatmap_plot <- ggplot(heat_map_df, aes(x=row_name, y=col_name)) +
     
-      # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
-      for (treatment in c('PM')) {
-        
-        subj_facs_df <- facs_df %>%
-          filter(Participant_ID==subj & Treatment==treatment)
-        
-        # for(i in 1:nrow(subj_facs_df)){
-        for(i in 1:3){
-          emotion_vals_by_row <- as.vector(unlist(subj_facs_df[i, emotion_list]))
-          
-          ## Outer product
-          current_matrix <- outer(emotion_vals_by_row, emotion_vals_by_row)
-          # print(outer_matrix)
-          
-          ## Convert into upper triangle matrix
-          current_matrix[lower.tri(current_matrix)] <- 0
-          
-          ## Normalize with the sum of the elements of the matrix
-          current_matrix <- current_matrix/sum(current_matrix)
-          
-          
-          print(final_matrix)
-          print(current_matrix)
-          ## Add to the final matrix
-          final_matrix <- final_matrix + current_matrix
-      }
+    geom_tile(aes(fill=diagonal_val)) +
+    geom_text(aes(label=diagonal_val)) +
+    scale_fill_gradientn(colours = c("lightgray","dimgray"), name = "") +
+    # scale_fill_gradientn(colours = c("white", "lightgray","dimgray"), name = "") +
+    # scale_fill_gradientn(colours = c("yellow", "orange", "tomato2", "red", "red4", "black"), name = "") +
+    
+    new_scale("fill") +
+    geom_tile(aes(fill=non_diagonal_val), data = subset(heat_map_df, non_diagonal_val >= 0)) +
+    geom_text(aes(label=non_diagonal_val), data = subset(heat_map_df, non_diagonal_val >= 0)) +
+    scale_fill_gradientn(colours = c("white", "lightblue", "darkblue"), name = "") +
+    # scale_fill_gradientn(colours = c("lightblue", "darkblue"), name = "") +
+    
+    new_scale("fill") +
+    geom_tile(aes(fill=non_diagonal_val), data = subset(heat_map_df, non_diagonal_val < -1), show.legend = FALSE) +
+    # geom_text(aes(label=non_diagonal_val), data = subset(heat_map_df, non_diagonal_val < -1), show.legend = FALSE) +
+    scale_fill_gradientn(colours = c("white")) +
+    
+    ggtitle(plot_title) +
+    xlab("") +
+    ylab("") +
+    theme_bw() +
+    theme(text = element_text(size=20),
+          panel.background = element_blank(),
+          panel.grid = element_blank(),
+          plot.title = element_text(hjust = 0.5, size=24)) +
+    labs(fill="") +
+    scale_x_discrete(position = "top")
+  
+  return(heatmap_plot)
+}
+
+
+get_heat_map_df <- function(subj_facs_df) {
+  ## Initializing matrix with all 0
+  final_matrix = matrix(0, facs_size, facs_size) 
+  
+  # print(subj_facs_df[c(1:10), emotion_cols])
+  # convert_to_csv(subj_facs_df[c(1:10), emotion_cols], 'facs_test.csv')
+  
+  for(i in 1:nrow(subj_facs_df)){
+    # for(i in 6:6){
+    
+    emotion_vals_by_row <- as.vector(unlist(subj_facs_df[i, emotion_cols]))
+    # emotion_vals_by_row <- as.vector(c(0, 0, 1, 1, 0, 7, 1))
+    
+    if (!any(is.na(emotion_vals_by_row))) {
+      ## Outer product
+      current_matrix <- outer(emotion_vals_by_row, emotion_vals_by_row)
+      # print(current_matrix)
+      
+      ## Convert into upper triangle matrix
+      current_matrix[lower.tri(current_matrix)] <- 0
+      # print(current_matrix)
+      
+      ## Normalize with the sum of the elements of the matrix
+      current_matrix <- current_matrix/sum(current_matrix)
+      # print(current_matrix)
+      
+      ## Add to the final matrix
+      final_matrix <- final_matrix + current_matrix
+      # print(paste0('Step ', i, ': Sum Matrix -->'))
+      # print(final_matrix)
     }
   }
   
-  # dividing matrix using 1000 and taking until 2 decimal
-  final_matrix = round(final_matrix)
+  ## Dividing matrix using 1000 and taking until 2 decimal
+  final_matrix = round(final_matrix, 2)
   final_matrix[lower.tri(final_matrix)] <- NA
+  dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
   
-  print(final_matrix)
-  return(final_matrix)
+  heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 
+    mutate(row_name=as.factor(row_name),
+           col_name=as.factor(col_name),
+           diagonal_val = ifelse(row_name==col_name, value, NA),
+           non_diagonal_val = ifelse(row_name==col_name, -1, value),
+           non_diagonal_val = ifelse(is.na(non_diagonal_val), -99, non_diagonal_val)) %>% 
+    mutate(col_name = recode(col_name,
+                             'WordCount'='Word Count',
+                             'CharCount'='Char Count'))
+  
+  # print(heat_map_df)
+  return(heat_map_df)
 }
 
-draw_plots <- function(facs_matrix) {
-  heat_map_df = melt(facs_matrix)
-  heat_map_df$Var1 = as.factor(heat_map_df$Var1)
-  heat_map_df$Var2 = as.factor(heat_map_df$Var2)
-  heat_map_df = heat_map_df %>% mutate(value2 = ifelse(Var1==Var2, value, NA))
-  heat_map_df = heat_map_df %>% mutate(value1 = ifelse(Var1==Var2, -1, value))
-  heat_map_df$value1[is.na(heat_map_df$value1)] <- -2
+draw_subj_session_plots <- function(facs_df) {
+
+  # for (subj in levels(factor(facs_df$Participant_ID))) {
+  # for (subj in c('T166', 'T175', 'T178')) {
+  for (subj in c('T005')) {
+    
+    # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
+    for (treatment in c('PR')) {
+      
+      subj_facs_df <- facs_df %>%
+        filter(Participant_ID==subj & Treatment==treatment)
+
+      heat_map_df <- get_heat_map_df(subj_facs_df)
+      heatmap_plot <- draw_heat_map_plot(heat_map_df, paste0(subj, ' - ', treatment))
+      save_plot(paste0(subj, '_', treatment), heatmap_plot)
+    }
+  }
   
-  
-  plot1 = ggplot(heat_map_df, aes(x=Var1, y=Var2))+
-    geom_tile(aes(fill=value2))+
-    scale_fill_gradientn(
-      colours = c("lightgray","dimgray"), name = "X 1000")+
-    new_scale("fill") +
-    geom_tile(aes(fill=value1), data = subset(heat_map_df, value1 > -1))+
-    scale_fill_gradientn(
-      colours = c("white","yellow", "red"), name = "X 1000")+
-    new_scale("fill") +
-    geom_tile(aes(fill=value1), data = subset(heat_map_df, value1 < -1 ), show.legend = FALSE)+
-    scale_fill_gradientn(
-      colours = c("white"))+
-    xlab("")+
-    ylab("")+
-    theme_bw()+
-    theme(text = element_text(size=20),
-          panel.background = element_blank(),
-          panel.grid = element_blank()) +
-    labs(fill=" X 1000") +
-    scale_x_discrete(position = "top")
-  
-  print(plot1)
 }
+
+
+draw_dual_task_group_plots <- function(facs_df) {
+  plot_list <- list()
+  for (group in c('B', 'C')) {
+    dt_facs_df <- facs_df %>%
+      filter(Treatment=='DT' & Group %in% paste0(group, c('H', 'L')))
+    
+    heat_map_df <- get_heat_map_df(dt_facs_df)
+    heatmap_plot <- draw_heat_map_plot(heat_map_df, paste0('Dual Task - ', group))
+    # save_plot(paste0('dual_task_', group), heatmap_plot)
+    plot_list[[length(plot_list)+1]] <- heatmap_plot
+  } 
+  
+  # combined_dt_plot 
+  # save_plot(paste0('dual_task_', group), combined_dt_plot)
+  
+}
+
+
+
+draw_dual_task_email_essay_plots <- function(facs_df) {
+  plot_list <- list()
+  for (group in c('B', 'C')) {
+    dt_facs_df <- facs_df %>%
+      filter(Treatment=='DT' & Group %in% paste0(group, c('H', 'L')))
+    
+    heat_map_df <- get_heat_map_df(dt_facs_df)
+    heatmap_plot <- draw_heat_map_plot(heat_map_df, paste0('Dual Task - ', group))
+    # save_plot(paste0('dual_task_', group), heatmap_plot)
+    plot_list[[length(plot_list)+1]] <- heatmap_plot
+  } 
+  
+  # combined_dt_plot 
+  # save_plot(paste0('dual_task_', group), combined_dt_plot)
+  
+}
+
+
 
 
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
 # facs_df <- read_data()
-facs_matrix <- make_matrix_data(facs_df)
-draw_plots(facs_matrix)
+# draw_subj_session_plots(facs_df)
+draw_dual_task_group_plots(facs_df)
+draw_dual_task_email_essay_plots(facs_df)
+
 
 
 
