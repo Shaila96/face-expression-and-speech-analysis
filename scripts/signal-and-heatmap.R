@@ -54,8 +54,6 @@ read_data <- function() {
   facs_df <<- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>% 
     mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
   
-  # print(str(facs_df))
-  
   return(facs_df)
 }
 
@@ -79,8 +77,8 @@ draw_heat_map_plot <- function(heat_map_df, plot_title) {
     geom_tile(aes(fill=non_diagonal_lower_matrix_val), data = subset(heat_map_df, non_diagonal_lower_matrix_val < 0), show.legend = FALSE) +
     # geom_text(aes(label=non_diagonal_val), data = subset(heat_map_df, non_diagonal_val < -1), show.legend = FALSE) +
     scale_fill_gradientn(colours = c("white")) +
-    
-    ggtitle(plot_title) +
+
+    # ggtitle(plot_title) +
     xlab("") +
     ylab("") +
     theme_bw() +
@@ -144,14 +142,27 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
                              'CharCount'='Char Count'))
   
   # print(heat_map_df)
-  convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
+  # convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
   return(heat_map_df)
 }
 
-draw_subj_session_plots <- function(facs_df) {
+draw_signal_plot <- function(subj_facs_df) {
+  signal_plot <- subj_facs_df %>% 
+    select(Treatment_Time_New, F_Angry, F_Disgusted, F_Afraid, F_Happy, F_Sad, F_Surprised, F_Neutral) %>% 
+    gather(key = "Expression", value = "Value", -Treatment_Time_New) %>% 
+    
+    ggplot(aes(x=Treatment_Time_New, y=Value, color=Expression)) +
+    geom_line(alpha = 0.7) +
+    ggtitle(subj_facs_df$Group) +
+    xlab("Time") +
+    ylab("Facial Expression Probability")
+    
+  return(signal_plot)
+}
 
+
+draw_signal_heatmap_plots <- function(facs_df) {
   # for (subj in levels(factor(facs_df$Participant_ID))) {
-  # for (subj in c('T166', 'T175', 'T178')) {
   for (subj in c('T005')) {
     
     # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
@@ -159,194 +170,23 @@ draw_subj_session_plots <- function(facs_df) {
       
       subj_facs_df <- facs_df %>%
         filter(Participant_ID==subj & Treatment==treatment)
-
+      
       heat_map_df <- get_heat_map_df(subj_facs_df)
       heatmap_plot <- draw_heat_map_plot(heat_map_df, paste0(subj, ' - ', treatment))
-      save_plot(paste0(subj, '_', treatment), heatmap_plot)
-    }
-  }
-  
-}
-
-
-draw_dual_task_group_plots <- function(facs_df) {
-  plot_list <- list()
-  for (group in group_list) {
-    dt_facs_df <- facs_df %>%
-      filter(Treatment=='DT' & Group %in% paste0(group, c('H', 'L')))
-
-    heat_map_df <- get_heat_map_df(dt_facs_df, group)
-    heatmap_plot <- draw_heat_map_plot(heat_map_df, paste0('Dual Task - ', group))
-    # save_plot(paste0('dual_task_', group), heatmap_plot)
-    plot_list[[length(plot_list)+1]] <- heatmap_plot
-  } 
-  
-  combined_dt_plot <- plot_grid(plotlist=plot_list, 
-                          labels=c('A', 'B'), 
-                          label_size=18,
-                          ncol=2)
-  save_plot('dual_task_group', combined_dt_plot, width=20)
-}
-
-
-draw_dual_task_group_email_report_plots <- function(facs_df) {
-  plot_list <- list()
-  for (group in group_list) {
-    for (task in c('Email', 'Report')) {
-      dt_task_facs_df <- facs_df %>%
-        filter(Treatment=='DT' & 
-               Task==task &
-               Group %in% paste0(group, c('H', 'L')))
+      # save_plot(paste0(subj, '_', treatment), heatmap_plot)
       
-      heat_map_df <- get_heat_map_df(dt_task_facs_df)
-      heatmap_plot <- draw_heat_map_plot(heat_map_df, paste0('Dual Task - ', group, ' - ', task))
-      save_plot(paste0('dual_task_', group, '_', task), heatmap_plot)
-      plot_list[[length(plot_list)+1]] <- heatmap_plot
+      signal_plot <- draw_signal_plot(subj_facs_df)
+      
+      combined_dt_plot <- plot_grid(signal_plot,
+                                    heatmap_plot,
+                                    # labels=c('A', 'B'),
+                                    # label_size=18,
+                                    # align='v',
+                                    # rel_height=c(2, 10),
+                                    ncol=1)
+      save_plot(paste0(subj, '_', treatment, '_combined'), combined_dt_plot, width=20)
     }
-  } 
-  
-  combined_dt_plot <- plot_grid(plotlist=plot_list, 
-                                labels=c('A', 'B', 'C', 'D'), 
-                                label_size=18,
-                                ncol=2)
-  
-  save_plot('dual_task_group_email_report', combined_dt_plot, width=30, height=20)
-}
-
-
-draw_dual_task_email_report_plots <- function(facs_df) {
-  plot_list <- list()
-  for (task in c('Email', 'Report')) {
-    dt_task_facs_df <- facs_df %>%
-      filter(Treatment=='DT' & Task==task)
-    
-    heat_map_df <- get_heat_map_df(dt_task_facs_df)
-    heatmap_plot <- draw_heat_map_plot(heat_map_df, paste0('Dual Task - ', task))
-    save_plot(paste0('dual_task_', task), heatmap_plot)
-    plot_list[[length(plot_list)+1]] <- heatmap_plot
   }
-  
-  combined_dt_plot <- plot_grid(plotlist=plot_list, 
-                                labels=c('A', 'B'), 
-                                label_size=18,
-                                ncol=2)
-  
-  save_plot('dual_task_email_report', combined_dt_plot, width=20)
-}
-
-get_stats <- function(facs_df) {
-  temp_facs_df <- facs_df %>% 
-    select(Participant_ID, Group) %>% 
-    group_by(Participant_ID, Group) %>%
-    summarize(n()) %>%
-    group_by(Group) %>%
-    summarise(Total_Group=n())
-  print(temp_facs_df)
-}
-
-get_proportion_test <- function() {
-  # file_name_list <- c('heat_map_dual_task_B.csv', 'heat_map_dual_task_C.csv')
-  
-  # diagonal_df_list <- vector()
-  # upper_diagonal_df_list <- vector()
-  
-  diagonal_df_list <- list()
-  upper_diagonal_df_list <- list()
-  
-  for (group in group_list) {
-    
-    file_name <- paste0('heat_map_dual_task_', group, '.csv')
-    prop_test_df <- custom_read_csv(file.path(current_dir, curated_data_dir, file_name)) %>% 
-      mutate(facs_combination=ifelse(row_name==col_name, row_name, paste0(row_name, '_', col_name)))
-    
-    diagonal_df <- prop_test_df %>% 
-      select(facs_combination, diagonal_val) %>% 
-      na.omit() %>% 
-      # mutate(sum = sum(diagonal_val),
-      #        proportion = diagonal_val/sum) %>% 
-      mutate(!!paste0('sum_', group):=sum(diagonal_val),
-             !!paste0('diagonal_val_', group):=diagonal_val) %>%
-      select(-diagonal_val)
-    
-    upper_diagonal_df <- prop_test_df %>% 
-      select(facs_combination, non_diagonal_upper_matrix_val) %>% 
-      filter(non_diagonal_upper_matrix_val>=0) %>% 
-      na.omit() %>% 
-      # mutate(sum = sum(non_diagonal_upper_matrix_val),
-      #        proportion = non_diagonal_upper_matrix_val/sum) %>% 
-      mutate(!!paste0('sum_', group):=sum(non_diagonal_upper_matrix_val),
-             !!paste0('non_diagonal_upper_matrix_val_', group):=non_diagonal_upper_matrix_val) %>%
-      select(-non_diagonal_upper_matrix_val)
-    
-    
-    # View(diagonal_df)
-    # View(upper_diagonal_df)
-    
-    
-    # diagonal_df_list <- c(diagonal_df_list, diagonal_df)
-    # upper_diagonal_df_list <- c(upper_diagonal_df_list, upper_diagonal_df)
-    
-    diagonal_df_list[[length(diagonal_df_list)+1]] <- diagonal_df
-    upper_diagonal_df_list[[length(upper_diagonal_df_list)+1]] <- upper_diagonal_df
-
-    
-    
-    # prop_test = prop.test(diagonal_df$diagonal_val, diagonal_df$sum)
-    # print(prop_test)
-    # 
-    # prop_test = prop.test(upper_diagonal_df$non_diagonal_upper_matrix_val, upper_diagonal_df$sum)
-    # print(prop_test)
-  }
-  
-  # View(merged_diagonal_df)
-  # View(merged_upper_diagonal_df)
-  
-  # View(Map(cbind, diagonal_df_list))
-  
-  diagonal_df <- merge(diagonal_df_list[1], diagonal_df_list[2], by='facs_combination') %>% 
-    mutate(percentage_B=diagonal_val_B/sum_B,
-           percentage_C=diagonal_val_C/sum_C)
-  upper_diagonal_df <- merge(upper_diagonal_df_list[1], upper_diagonal_df_list[2], by='facs_combination') %>% 
-    mutate(percentage_B=non_diagonal_upper_matrix_val_B/sum_B,
-           percentage_C=non_diagonal_upper_matrix_val_C/sum_C)
-  # View(diagonal_df)
-  # View(upper_diagonal_df)
-  
-  # for (fac in levels(factor(diagonal_df$facs_combination))) {
-  #   temp_diagonal_df <- diagonal_df %>%
-  #     filter(facs_combination==fac)
-  # 
-  #   prop_test = prop.test(c(temp_diagonal_df$diagonal_val_B, temp_diagonal_df$diagonal_val_C),
-  #                         c(temp_diagonal_df$sum_B, temp_diagonal_df$sum_C),
-  #                         p = NULL,
-  #                         alternative = 'less',
-  #                         correct = T)
-  #   print(fac)
-  #   print(prop_test$p.value)
-  #   print(prop_test)
-  # }
-  
-  
-  new_upper_diagonal_df <- data.frame()
-  
-  for (fac in levels(factor(upper_diagonal_df$facs_combination))) {
-    temp_upper_diagonal_df <- upper_diagonal_df %>%
-      filter(facs_combination==fac)
-
-    prop_test = prop.test(c(temp_upper_diagonal_df$non_diagonal_upper_matrix_val_B, temp_upper_diagonal_df$non_diagonal_upper_matrix_val_C),
-                          c(temp_upper_diagonal_df$sum_B, temp_upper_diagonal_df$sum_C),
-                          p = NULL,
-                          alternative = 'less',
-                          correct = T)
-    print(fac)
-    print(prop_test$p.value)
-    temp_upper_diagonal_df$p_val=prop_test$p.value
-    
-    new_upper_diagonal_df <- rbind(new_upper_diagonal_df, temp_upper_diagonal_df)
-  }
-  
-  View(new_upper_diagonal_df)
-  
 }
 
 
@@ -355,16 +195,8 @@ get_proportion_test <- function() {
 #-------------------------#
 # facs_df <- read_data()
 
-# get_stats(facs_df)
+draw_signal_heatmap_plots(facs_df)
 
-# draw_dual_task_group_plots(facs_df)
-
-get_proportion_test()
-
-
-# draw_subj_session_plots(facs_df)
-# draw_dual_task_group_email_report_plots(facs_df)
-# draw_dual_task_email_report_plots(facs_df)
 
 
 

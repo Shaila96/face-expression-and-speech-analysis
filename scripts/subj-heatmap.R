@@ -9,7 +9,8 @@ library(data.table)
 library(reshape2)
 library(ggnewscale)
 library(cowplot)
-library(cowplot)
+library(nonpar)
+library(cooccur)
 
 
 
@@ -144,7 +145,7 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
                              'CharCount'='Char Count'))
   
   # print(heat_map_df)
-  convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
+  # convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
   return(heat_map_df)
 }
 
@@ -309,43 +310,59 @@ get_proportion_test <- function() {
   upper_diagonal_df <- merge(upper_diagonal_df_list[1], upper_diagonal_df_list[2], by='facs_combination') %>% 
     mutate(percentage_B=non_diagonal_upper_matrix_val_B/sum_B,
            percentage_C=non_diagonal_upper_matrix_val_C/sum_C)
-  # View(diagonal_df)
-  # View(upper_diagonal_df)
   
-  # for (fac in levels(factor(diagonal_df$facs_combination))) {
-  #   temp_diagonal_df <- diagonal_df %>%
+  View(diagonal_df)
+  View(upper_diagonal_df)
+  
+  
+  
+  
+  diagonal_matrix <- as.matrix(diagonal_df[, c('percentage_B', 'percentage_C')])
+  non_diagonal_matrix <- as.matrix(upper_diagonal_df[, c('percentage_B', 'percentage_C')])
+
+  print(diagonal_matrix)
+  print(non_diagonal_matrix)
+  # 
+  print(cochrans.q(diagonal_matrix, alpha=NULL))
+  print(cochrans.q(non_diagonal_matrix, alpha=NULL))
+  
+  # mcnemar.test(diagonal_matrix)
+  
+  # Performance <-
+  #   matrix(c(794, 86, 150, 570),
+  #          nrow = 2,
+  #          dimnames = list("1st Survey" = c("Approve", "Disapprove"),
+  #                          "2nd Survey" = c("Approve", "Disapprove")))
+  # print(Performance)
+  # mcnemar.test(Performance)
+  
+  # cooccur(diagonal_matrix, type = "spp_site")
+  # chisq.test(tbl) 
+  
+  
+  
+  
+  
+  
+  # new_upper_diagonal_df <- data.frame()
+  # 
+  # for (fac in levels(factor(upper_diagonal_df$facs_combination))) {
+  #   temp_upper_diagonal_df <- upper_diagonal_df %>%
   #     filter(facs_combination==fac)
   # 
-  #   prop_test = prop.test(c(temp_diagonal_df$diagonal_val_B, temp_diagonal_df$diagonal_val_C),
-  #                         c(temp_diagonal_df$sum_B, temp_diagonal_df$sum_C),
+  #   prop_test = prop.test(c(temp_upper_diagonal_df$non_diagonal_upper_matrix_val_B, temp_upper_diagonal_df$non_diagonal_upper_matrix_val_C),
+  #                         c(temp_upper_diagonal_df$sum_B, temp_upper_diagonal_df$sum_C),
   #                         p = NULL,
   #                         alternative = 'less',
   #                         correct = T)
   #   print(fac)
   #   print(prop_test$p.value)
-  #   print(prop_test)
+  #   temp_upper_diagonal_df$p_val=prop_test$p.value
+  #   
+  #   new_upper_diagonal_df <- rbind(new_upper_diagonal_df, temp_upper_diagonal_df)
   # }
-  
-  
-  new_upper_diagonal_df <- data.frame()
-  
-  for (fac in levels(factor(upper_diagonal_df$facs_combination))) {
-    temp_upper_diagonal_df <- upper_diagonal_df %>%
-      filter(facs_combination==fac)
-
-    prop_test = prop.test(c(temp_upper_diagonal_df$non_diagonal_upper_matrix_val_B, temp_upper_diagonal_df$non_diagonal_upper_matrix_val_C),
-                          c(temp_upper_diagonal_df$sum_B, temp_upper_diagonal_df$sum_C),
-                          p = NULL,
-                          alternative = 'less',
-                          correct = T)
-    print(fac)
-    print(prop_test$p.value)
-    temp_upper_diagonal_df$p_val=prop_test$p.value
-    
-    new_upper_diagonal_df <- rbind(new_upper_diagonal_df, temp_upper_diagonal_df)
-  }
-  
-  View(new_upper_diagonal_df)
+  # 
+  # View(new_upper_diagonal_df)
   
 }
 
@@ -365,6 +382,8 @@ get_proportion_test()
 # draw_subj_session_plots(facs_df)
 # draw_dual_task_group_email_report_plots(facs_df)
 # draw_dual_task_email_report_plots(facs_df)
+
+
 
 
 
