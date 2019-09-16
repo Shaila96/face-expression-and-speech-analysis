@@ -85,7 +85,7 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
               data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0)) +
     # geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0)) +
     # geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0)) +
-    scale_fill_gradientn(colours = c("white", "yellow", "red"), name = "") +
+    scale_fill_gradientn(colours = c("white", "yellow", "pink"), name = "") +
     
     new_scale("fill") +
     geom_tile(aes(fill=non_diagonal_lower_matrix_val), 
@@ -173,13 +173,17 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
 
 
 
-draw_dual_task_group_plots <- function(facs_df, type) {
+draw_dual_task_group_plots <- function(facs_df, type, test=F) {
   plot_list <- list()
   
   for (group in group_list) {
     dt_facs_df <- facs_df %>%
-      filter(Treatment=='DT' & Group %in% paste0(group, c('H', 'L'))) %>% 
-      slice(1:1000)
+      filter(Treatment=='DT' & Group %in% paste0(group, c('H', 'L'))) 
+    
+    if (test==T) {
+      dt_facs_df <- dt_facs_df %>% 
+        slice(1:1000)
+    }
 
     heat_map_df <- get_heat_map_df(dt_facs_df, group)
     heatmap_plot <- draw_heat_map_plot(heat_map_df, type, paste0('Dual Task - ', group))
@@ -205,7 +209,12 @@ draw_dual_task_group_plots <- function(facs_df, type) {
 # get_stats(facs_df)
 
 draw_dual_task_group_plots(facs_df, 'summative')
-draw_dual_task_group_plots(facs_df, 'percentage')
+# draw_dual_task_group_plots(facs_df, 'percentage')
+
+
+
+# draw_dual_task_group_plots(facs_df, 'summative', test=T)
+# draw_dual_task_group_plots(facs_df, 'percentage', test=T)
 
 
 

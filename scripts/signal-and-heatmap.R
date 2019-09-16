@@ -51,7 +51,7 @@ group_list <- c('B', 'C')
 read_data <- function() {
   ## Making the df as global variable, as it takes a lot of time to load.
   ## So, during one R session we load this df once
-  facs_df <<- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>% 
+  facs_df <- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>% 
     mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
   
   return(facs_df)
@@ -86,13 +86,15 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
               data = subset(heat_map_df, non_diagonal_lower_matrix_val < 0), show.legend = FALSE) +
     scale_fill_gradientn(colours = c("white")) +
     
-    ggtitle(plot_title) +
+    # ggtitle(plot_title) +
     xlab("") +
     ylab("") +
     theme_bw() +
     theme(text = element_text(size=20),
           panel.background = element_blank(),
           panel.grid = element_blank(),
+          legend.position = 'left',
+          plot.margin=unit(c(t = 0, r = 1.8, b = 2, l = 0), "lines"),
           plot.title = element_text(hjust = 0.5, size=24)) +
     labs(fill="") +
     scale_x_discrete(position = "top")
@@ -171,13 +173,30 @@ draw_signal_plot <- function(subj_facs_df, subj, treatment) {
   signal_plot <- subj_facs_df %>% 
     select(Treatment_Time_New, F_Angry, F_Disgusted, F_Afraid, F_Happy, F_Sad, F_Surprised, F_Neutral) %>% 
     gather(key = "Expression", value = "Value", -Treatment_Time_New) %>% 
+    mutate(Expression = recode_factor(Expression,
+                                      'F_Neutral'='Neutral',
+                                      'F_Surprised'='Surprised',
+                                      'F_Sad'='Sad',
+                                      'F_Happy'='Happy',
+                                      'F_Afraid'='Afraid',
+                                      'F_Disgusted'='Disgusted',
+                                      'F_Angry'='Angry')) %>% 
     
     ggplot(aes(x=Treatment_Time_New, y=Value, color=Expression)) +
-    geom_line(alpha = 0.7) +
+    geom_line(alpha = 0.5, size=1.2) +
     
-    ggtitle(paste0(subj, ' - ', treatment, ' - ', subj_facs_df$Group)) +
+    # ggtitle(paste0(subj, ' - ', treatment, ' - ', subj_facs_df$Group)) +
     xlab("Time [s]") +
-    ylab("Facial Expression Probability") +
+    ylab("Probability") +
+    
+    scale_color_manual(values = c("Neutral"="Gray", 
+                                  "Surprised"="Violet",
+                                  "Sad"="Blue",
+                                  "Happy"="Green",
+                                  "Afraid"="Orange",
+                                  "Disgusted"="Brown",
+                                  "Angry"="Red"
+                                  )) +
     
     theme_bw() +
     theme(text=element_text(size=18),
@@ -185,7 +204,7 @@ draw_signal_plot <- function(subj_facs_df, subj, treatment) {
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           axis.line = element_line(colour = "black"),
-          # legend.position='bottom',
+          legend.position='left',
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5,
                                     size=20,
@@ -199,15 +218,17 @@ draw_signal_plot <- function(subj_facs_df, subj, treatment) {
 
 draw_signal_heatmap_plots <- function(facs_df, type) {
   # for (subj in levels(factor(facs_df$Participant_ID))) {
-  for (subj in c('T005')) {
+  # for (subj in c('T005')) {
+  for (subj in c('T085')) {
     
     # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
-    for (treatment in c('PR')) {
-    # for (treatment in c('DT')) {
+    # for (treatment in c('PR')) {
+    for (treatment in c('DT')) {
       
       subj_facs_df <- facs_df %>%
-        filter(Participant_ID==subj & Treatment==treatment) %>% 
-        slice(1:100)
+        filter(Participant_ID==subj & Treatment==treatment) 
+      # %>% 
+      #   slice(1:1000)
       
       heat_map_df <- get_heat_map_df(subj_facs_df)
       heatmap_plot <- draw_heat_map_plot(heat_map_df, type, paste0(subj, ' - ', treatment))
@@ -215,13 +236,18 @@ draw_signal_heatmap_plots <- function(facs_df, type) {
       
       signal_plot <- draw_signal_plot(subj_facs_df, subj, treatment)
       
-      combined_dt_plot <- plot_grid(NULL,
+      
+      title <- ggdraw() + 
+        draw_label(paste0(subj, ' - ', treatment, ' - ', get_group_abbr(subj_facs_df$Group[1])), 
+                   # fontface='bold',
+                   size=20)
+      combined_dt_plot <- plot_grid(title,
+                                    NULL,
                                     signal_plot,
                                     heatmap_plot,
-                                    labels=c('', 'A', 'B'),
+                                    # labels=c('', '', 'A', 'B'),
                                     # label_size=18,
-                                    # align='v',
-                                    # rel_height=c(1.5, 4, 4.5),
+                                    rel_heights=c(0.1, 0.4, 1, 1),
                                     ncol=1)
       save_plot(paste0(subj, '_', treatment, '_combined_', type), combined_dt_plot, width=20)
     }
@@ -234,10 +260,10 @@ draw_signal_heatmap_plots <- function(facs_df, type) {
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
-# facs_df <- read_data()
+# facs_df <<- read_data()
 
 draw_signal_heatmap_plots(facs_df, 'summative')
-draw_signal_heatmap_plots(facs_df, 'percentage')
+# draw_signal_heatmap_plots(facs_df, 'percentage')
 
 
 
