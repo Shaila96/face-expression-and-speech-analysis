@@ -1,0 +1,274 @@
+---
+title: "brain_heatmap_common"
+# author: "Emtiaz"
+# date: "August 20, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(plyr)
+library(ggplot2)
+library(dplyr)
+library(miceadds)
+library(gtools)
+library(ggpubr)
+library(gvlma)
+library(MASS)
+library(reshape2)
+library(ggcorrplot)
+library(GGally)
+library(ggnewscale)
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+read_and_cipCode <- function(df_cip, dispName){
+  df = read.csv(paste0("data/cip_publication/publication_", dispName,".csv"), stringsAsFactors=FALSE)
+  df$eids = as.factor(df$eids)
+  df$co_author_scopus_id = as.factor(df$co_author_scopus_id)
+  df$co_author_cip = as.factor(df$co_author_cip)
+  colnames(df) = c("eids", "author", "cip_title")
+  print(nrow(df))
+  df = df %>% filter(cip_title != "Other")
+
+  df = df %>% merge(df_cip, by = "cip_title")
+  
+  print(nrow(df))
+  # print(df)
+  df
+  
+  
+}
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+calculate_dept_count <- function(pdf, cip_df){
+  df = pdf
+  ## count the subject areas in each cluster
+  df1 = as.data.frame(df %>% group_by(eids, id) %>% summarise(num_count = n()) %>% arrange(eids) )
+  # print(df1)
+  
+
+  ## find the unique clusters
+  cIds = unique(cip_df$id)
+  # print(cIds)
+  
+  ## select unique EIDs
+  uniqueEid_m = df1 %>% dplyr::select(eids)  %>% distinct()
+  # print(nrow(uniqueEid_m))
+
+
+  eid_label_m = unlist(uniqueEid_m$eids)
+ 
+  ## create labels list
+  lab_clus = c(rep(cIds, length(eid_label_m)))
+  # print(lab_clus)
+  
+  lab_eid = rep(eid_label_m, each = length(cIds))
+  
+  ## create dataframe using eid and cluster id
+  df2 = data.frame(lab_eid, lab_clus)
+  # print(head(df2))
+  
+  colnames(df2) = c('eids', 'id')
+  # 
+  df2$eids = as.factor(df2$eids)
+  df2$id = as.factor(df2$id)
+  
+  ## join 2 dataframes
+  final_df = df1 %>% right_join(df2, by=c("eids", "id"))
+  # print(final_df)
+  
+  
+  ## set value 0 for NA's
+  final_df[is.na(final_df)] <- 0
+
+  # print(final_df)
+
+  ## combined rows using , and created a list
+  final_data = as.data.frame(final_df %>% group_by(eids) %>% summarise(clusterList = paste(num_count, collapse=",")))
+
+  # print(final_data)
+
+
+  final_data
+  
+  
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+
+create_matrix <- function(pdf, cSize){
+  df = pdf
+  
+  ## declare a common matrix with all 0's
+  mat = matrix(0, cSize, cSize)
+  # print(mat)
+  
+  for(i in 1:nrow(df)){
+    row = df[i,2]
+    row = c(as.integer(unlist(strsplit(row, ","))))
+    ## take outer product
+    p <- outer(row, row)
+    
+    ## convert into upper triangle matrix
+    p[lower.tri(p)] <- 0
+   
+    ## find the sum of all elements
+    sum_p <- sum(p)
+    
+    ## normalized
+    p1 <- p/sum_p
+    # print(p1)
+
+    # ## add into common matrix
+    mat = mat + p1
+    # break
+
+  }
+  print(mat)
+  # dividing matrix using 1000 and taking until 2 decimal
+  mat = round(mat/1000, 2)
+  # mat = round(mat, 2)
+  mat[lower.tri(mat)] <- NA
+  mat
+  
+}
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+draw_heatmap <- function(mat, fileName){
+  d_mat = mat
+  df = reshape2::melt(d_mat)
+  # print(df)
+  # df = df[complete.cases(df),]
+  # dff = df %>% filter(value > 0)
+  df$Var1 = as.factor(df$Var1)
+  df$Var2 = as.factor(df$Var2)
+  df = df %>% mutate(value2 = ifelse(Var1==Var2, value, NA))
+  df = df %>% mutate(value1 = ifelse(Var1==Var2, -1, value))
+  df$value1[is.na(df$value1)] <- -2
+  print(df)
+  # print(max(dff$value))
+  
+  # mid_val = max(df$value)/2
+  # max_val = round(max(df$value)+0.5)
+  # mat_dim = nrow(d_mat)
+  # print(mat_dim)
+  # print(max_val)
+  # print(mid_val)
+  # # # seq_values <- seq(0, max_val, length = 10)
+  
+  # plot1 = ggplot(df, aes(Var1, Var2, fill = value))+
+  #   geom_tile()+
+  #   scale_fill_gradientn(
+  #                        colours = c("white","yellow","red"))+
+  #   xlab("")+
+  #   ylab("")+
+  #   theme_bw()+
+  #   theme(text = element_text(size=20),
+  #         panel.background = element_blank(),
+  #         panel.grid = element_blank()) +
+  #   labs(fill=" X 1000") +
+  #   scale_x_discrete(position = "top")
+  # print(plot1)
+  # ggsave(paste0("plots/",fileName,".png"), plot1, height = 12, width = 12)
+  
+  # df_diagonal = df %>% filter(Var1 == Var2)
+  # print(df_diagonal)
+  # df_other = df %>% filter(Var1 != Var2)
+  # # 
+  
+  plot1 = ggplot(df, aes(x=Var1, y=Var2))+
+    geom_tile(aes(fill=value2))+
+    scale_fill_gradientn(
+                         colours = c("lightgray","dimgray"), name = "X 1000")+
+    new_scale("fill") +
+    geom_tile(aes(fill=value1), data = subset(df, value1 > -1))+
+    scale_fill_gradientn(
+                         colours = c("white","yellow", "red"), name = "X 1000")+
+    new_scale("fill") +
+    geom_tile(aes(fill=value1), data = subset(df, value1 < -1 ), show.legend = FALSE)+
+    scale_fill_gradientn(
+                         colours = c("white"))+
+    xlab("")+
+    ylab("")+
+    theme_bw()+
+    theme(text = element_text(size=20),
+          panel.background = element_blank(),
+          panel.grid = element_blank()) +
+    labs(fill=" X 1000") +
+    scale_x_discrete(position = "top")
+
+  print(plot1)
+  ggsave(paste0("plots/",fileName,".png"), plot1, height = 12, width = 12)
+  
+
+}
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# disp_label <- list("Agricultural_Engineering","Agriculture","Biochemistry", "Biology",
+#                    "Biomathematics", "Biomedical", "Biotechnology", "Cell_Biology",
+#                    "Chemical_Engineering", "Chemistry", "Civil_Engineering", "Computer_Sciences",
+#                    "Education", "Electrical_Engineering", "Engineering_Physics",
+#                    "Environmental_Science", "Genetics", "Health_Fitness", "Health_Services",
+#                    "Mathematics", "Mechanical_Engineering", "Mechatronic_Engineering",
+#                    "Microbiological", "Molecular_Medicine", "Multi_Interdisciplinary_Studies",
+#                    "Neurobiology", "Pharmacology", "Physics", "Physiology", "Psychology",
+#                    "Residency_Programs", "Social_Sciences", "Statistics", "Work_Family_Studies")
+
+disp_label <- list("Biology",
+                   "Computer_Sciences",
+                   "Electrical_Engineering", 
+                   "Health_Services",
+                   "Neurobiology", 
+                   "Physics", 
+                   "Psychology",
+                   "Residency_Programs")
+
+
+# x <- c(2:34)
+x <- c(2:8)
+
+df_cip = read.csv("data/cipList.csv", stringsAsFactors=FALSE)
+df_cip$cip_title = as.factor(df_cip$cip_title)
+df_cip$id = as.factor(df_cip$id)
+
+all_pub_df = read_and_cipCode(df_cip, disp_label[1])
+print(head(all_pub_df))
+
+
+for (i in x){
+  df = read_and_cipCode(df_cip, disp_label[i])
+  all_pub_df = rbind(all_pub_df, df)
+  # print(paste0("Size: ", nrow(df)))
+
+
+
+  # break
+}
+# print(nrow(all_pub_df))
+# # print(all_pub_df)
+# print(unique(all_pub_df$id))
+
+final_df  = calculate_dept_count(all_pub_df, df_cip)
+# write.csv(final_df, file = "data/brain_publication_matrix.csv", row.names = FALSE)
+# print(final_df)
+# print(nrow(final_df))
+matrix_df = create_matrix(final_df, 8)
+
+  # print("Final matrix: ")
+  # # print(matrix_df)
+  #
+  #
+draw_heatmap(matrix_df, "Common")
+
+```
