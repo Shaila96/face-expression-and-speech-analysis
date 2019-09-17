@@ -206,6 +206,7 @@ draw_dual_task_group_plots <- function(facs_df, type, test=F) {
 
 
 
+
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
@@ -213,13 +214,19 @@ draw_dual_task_group_plots <- function(facs_df, type, test=F) {
 
 # get_stats(facs_df)
 
-draw_dual_task_group_plots(facs_df, 'summative')
+# draw_dual_task_group_plots(facs_df, 'summative')
 # draw_dual_task_group_plots(facs_df, 'percentage')
 
 
 
 # draw_dual_task_group_plots(facs_df, 'summative', test=T)
 # draw_dual_task_group_plots(facs_df, 'percentage', test=T)
+
+
+
+
+
+
 
 
 

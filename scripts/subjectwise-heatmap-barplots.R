@@ -44,6 +44,14 @@ plot_emotion_cols <- c('Angry',
                        'Surprised',
                        'Neutral')
 
+panorama_emotion_cols <- c('An',
+                       'Di',
+                       'Af',
+                       'Ha',
+                       'Sa',
+                       'Su',
+                       'Ne')
+
 group_list <- c('B', 'C')
 
 
@@ -117,7 +125,7 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
 
 
 
-get_heat_map_df <- function(subj_facs_df, group='no_group') {
+get_heat_map_df <- function(subj_facs_df, group='no_group', plot_type='None') {
   ## Initializing matrix with all 0
   final_matrix = matrix(0, facs_size, facs_size) 
   
@@ -153,7 +161,12 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
   ## Dividing matrix using 1000 and taking until 2 decimal
   final_matrix = round(final_matrix, 2)
   final_matrix[lower.tri(final_matrix)] <- NA
-  dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
+  
+  if (plot_type=='panorama') {
+    dimnames(final_matrix) = list(panorama_emotion_cols, panorama_emotion_cols)
+  } else {
+    dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
+  }
   
   heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 
     mutate(row_name=as.factor(row_name),
@@ -164,7 +177,7 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
            diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
            non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
   
-  View(heat_map_df)
+  # View(heat_map_df)
   # convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
   return(heat_map_df)
 }
@@ -376,6 +389,94 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
 }
 
 
+draw_panaroma_heat_map_plot <- function(heat_map_df, type, plot_title) {
+  
+  heatmap_plot <- ggplot(heat_map_df, aes(x=row_name, y=col_name)) +
+    
+    geom_tile(aes(fill=diagonal_val),
+              show.legend = FALSE) +
+    # geom_text(aes(label=diagonal_val)) +
+    # geom_text(aes(label=diagonal_percentage)) +
+    scale_fill_gradientn(colours = c("lightgray","dimgray"), name = "") +
+    
+    new_scale("fill") +
+    geom_tile(aes(fill=non_diagonal_upper_matrix_val), 
+              data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0),
+              show.legend = FALSE) +
+    # geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0)) +
+    # geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0)) +
+    scale_fill_gradientn(colours = c("white", "yellow", "pink"), name = "") +
+    
+    new_scale("fill") +
+    geom_tile(aes(fill=non_diagonal_lower_matrix_val), 
+              data = subset(heat_map_df, non_diagonal_lower_matrix_val < 0), 
+              show.legend = FALSE) +
+    scale_fill_gradientn(colours = c("white")) +
+    
+    # ggtitle(plot_title) +
+    xlab("") +
+    ylab("") +
+    theme_bw() +
+    theme(text = element_text(size=20),
+          panel.background = element_blank(),
+          panel.grid = element_blank(),
+          legend.position = 'left',
+          plot.margin=unit(c(t = 0, r = 1.8, b = 2, l = 0), "lines"),
+          plot.title = element_text(hjust = 0.5, size=24)) +
+    labs(fill="") +
+    scale_x_discrete(position = "top")
+  
+  
+  if (type=='summative') {
+    heatmap_plot <- heatmap_plot + 
+      geom_text(aes(label=diagonal_val), size=geom_text_size) +
+      geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0), size=geom_text_size)
+  } else if (type=='percentage') {
+    heatmap_plot <- heatmap_plot + 
+      geom_text(aes(label=diagonal_percentage), size=geom_text_size) +
+      geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0), size=geom_text_size)
+  } 
+  
+  return(heatmap_plot)
+}
+
+
+draw_panorama_heatmap <- function(facs_df, type, test=F) {
+  plot_list <- list()
+  
+  for (group in group_list) {
+    group_facs_df <- facs_df %>%
+      filter(Group %in% paste0(group, c('H', 'L')))
+ 
+    for (subj in levels(factor(group_facs_df$Participant_ID))) {
+      subj_facs_df <- group_facs_df %>%
+        filter(Participant_ID==subj) 
+      
+      if (test==T) {
+        subj_facs_df <- subj_facs_df %>% 
+          slice(1:100)
+      }
+      
+      heat_map_df <- get_heat_map_df(subj_facs_df, plot_type='panorama')
+      heatmap_plot <- draw_panaroma_heat_map_plot(heat_map_df, type, subj)
+      plot_list[[length(plot_list)+1]] <- heatmap_plot
+    }
+  }
+  
+
+  panorama_batch_plot <- plot_grid(plotlist=plot_list[1:13],
+                                   ncol=5)
+  panorama_continual_plot <- plot_grid(plotlist=plot_list[14:26],
+                                      ncol=5)
+  
+  panorama_plot <- plot_grid(panorama_batch_plot,
+                             panorama_continual_plot,
+                             ncol=1)
+  save_plot(paste0('panorama_heatmap_', type), panorama_plot, width=20, height=24)
+}
+
+
+
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
@@ -395,13 +496,22 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
 # draw_area_heatmap_plots(facs_df, 'summative', 'bar', test=T)
 
 
-draw_signal_heatmap_plots(facs_df, 'summative')
-draw_area_heatmap_plots(facs_df, 'summative', 'bar')
+# draw_signal_heatmap_plots(facs_df, 'summative')
+# draw_area_heatmap_plots(facs_df, 'summative', 'bar')
 
 
 
 
 
+
+
+# draw_panorama_heatmap(facs_df, 'summative')
+# draw_panorama_heatmap(facs_df, 'percentage')
+
+
+draw_panorama_heatmap(facs_df, 'no_text', test=T)
+# draw_panorama_heatmap(facs_df, 'summative', test=T)
+# draw_panorama_heatmap(facs_df, 'percentage', test=T)
 
 
 
