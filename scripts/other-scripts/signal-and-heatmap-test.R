@@ -26,8 +26,6 @@ setwd(current_dir)
 
 
 facs_size <- 7
-geom_text_size <- 6
-
 emotion_cols <- c('F_Angry',
                   'F_Disgusted',
                   'F_Afraid',
@@ -54,7 +52,22 @@ read_data <- function() {
   ## Making the df as global variable, as it takes a lot of time to load.
   ## So, during one R session we load this df once
   facs_df <- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>% 
-    mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
+    mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1) %>%  ## F_Seconds%%1 gives the deicmal point
+    mutate(F_Neutral=0.7,
+           F_Sad=0.3,
+           F_Angry=0,
+           F_Disgusted=0,
+           F_Afraid=0,
+           F_Happy=0,
+           F_Surprised=0)
+  
+  # 'F_Angry',
+  # 'F_Disgusted',
+  # 'F_Afraid',
+  # 'F_Happy',
+  # 'F_Sad',
+  # 'F_Surprised',
+  # 'F_Neutral'
   
   return(facs_df)
 }
@@ -104,12 +117,12 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
   
   if (type=='summative') {
     heatmap_plot <- heatmap_plot + 
-      geom_text(aes(label=diagonal_val), size=geom_text_size) +
-      geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0), size=geom_text_size)
+      geom_text(aes(label=diagonal_val)) +
+      geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0))
   } else if (type=='percentage') {
     heatmap_plot <- heatmap_plot + 
-      geom_text(aes(label=diagonal_percentage), size=geom_text_size) +
-      geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0), size=geom_text_size)
+      geom_text(aes(label=diagonal_percentage)) +
+      geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0))
   } 
   
   return(heatmap_plot)
@@ -176,21 +189,20 @@ draw_signal_plot <- function(subj_facs_df, subj, treatment) {
     select(Treatment_Time_New, F_Angry, F_Disgusted, F_Afraid, F_Happy, F_Sad, F_Surprised, F_Neutral) %>% 
     gather(key = "Expression", value = "Value", -Treatment_Time_New) %>% 
     mutate(Expression = recode_factor(Expression,
-                                      'F_Angry'='Angry',
-                                      'F_Disgusted'='Disgusted',
-                                      'F_Afraid'='Afraid',
-                                      'F_Happy'='Happy',
-                                      'F_Sad'='Sad',
+                                      'F_Neutral'='Neutral',
                                       'F_Surprised'='Surprised',
-                                      'F_Neutral'='Neutral'
-                                      )) %>% 
+                                      'F_Sad'='Sad',
+                                      'F_Happy'='Happy',
+                                      'F_Afraid'='Afraid',
+                                      'F_Disgusted'='Disgusted',
+                                      'F_Angry'='Angry')) %>% 
     
     ggplot(aes(x=Treatment_Time_New, y=Value, color=Expression)) +
     geom_line(alpha = 0.5, size=1.2) +
     
     # ggtitle(paste0(subj, ' - ', treatment, ' - ', subj_facs_df$Group)) +
     xlab("Time [s]") +
-    ylab("") +
+    ylab("Probability") +
     
     scale_color_manual(values = c("Neutral"="White", 
                                   "Surprised"="Cyan",
@@ -219,13 +231,13 @@ draw_signal_plot <- function(subj_facs_df, subj, treatment) {
 }
 
 
-draw_signal_heatmap_plots <- function(facs_df, type, test=F) {
-  for (subj in levels(factor(facs_df$Participant_ID))) {
-  # for (subj in c('T051', 'T064', 'T083', 'T085', 'T132', 'T178')) {
-  # for (subj in c('T051', 'T132')) {
-  # for (subj in c('T068')) {
+test_signal_heatmap_plots <- function(facs_df, type, test=F) {
+  # for (subj in levels(factor(facs_df$Participant_ID))) {
+  for (subj in c('T005')) {
+  # for (subj in c('T085')) {
     
     # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
+    # for (treatment in c('PR')) {
     for (treatment in c('DT')) {
       
       subj_facs_df <- facs_df %>%
@@ -246,17 +258,17 @@ draw_signal_heatmap_plots <- function(facs_df, type, test=F) {
       
       title <- ggdraw() + 
         draw_label(paste0(subj, ' - ', treatment, ' - ', get_group_abbr(subj_facs_df$Group[1])), 
-                   fontface='bold',
-                   size=24)
+                   # fontface='bold',
+                   size=20)
       
       
       combined_dt_plot <- plot_grid(title,
-                                    # NULL,
+                                    NULL,
                                     signal_plot,
                                     heatmap_plot,
                                     # labels=c('', '', 'A', 'B'),
                                     # label_size=18,
-                                    rel_heights=c(0.2, 1, 1),
+                                    rel_heights=c(0.1, 0.4, 1, 1),
                                     ncol=1)
       save_plot(paste0(subj, '_', treatment, '_signal_combined_', type), combined_dt_plot, width=20)
     }
@@ -269,12 +281,12 @@ draw_area_plot <- function(subj_facs_df, subj, treatment, area_plot_type) {
     select(Treatment_Time_New, F_Angry, F_Disgusted, F_Afraid, F_Happy, F_Sad, F_Surprised, F_Neutral) %>% 
     gather(key = "Expression", value = "Value", -Treatment_Time_New) %>% 
     mutate(Expression = recode_factor(Expression,
-                                      'F_Angry'='Angry',
                                       'F_Disgusted'='Disgusted',
-                                      'F_Afraid'='Afraid',
                                       'F_Happy'='Happy',
-                                      'F_Sad'='Sad',
                                       'F_Surprised'='Surprised',
+                                      'F_Afraid'='Afraid',
+                                      'F_Angry'='Angry',
+                                      'F_Sad'='Sad',
                                       'F_Neutral'='Neutral'
                                       )) %>% 
     
@@ -292,7 +304,7 @@ draw_area_plot <- function(subj_facs_df, subj, treatment, area_plot_type) {
     
   area_plot <- area_plot +
     xlab("Time [s]") +
-    ylab("") +
+    ylab("Probability") +
 
     scale_color_manual(values = c("Neutral"="White",
                                   "Surprised"="Cyan",
@@ -329,11 +341,9 @@ draw_area_plot <- function(subj_facs_df, subj, treatment, area_plot_type) {
   return(area_plot)
 }
 
-draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test=F) {
-  for (subj in levels(factor(facs_df$Participant_ID))) {
-  # for (subj in c('T051', 'T064', 'T083', 'T085', 'T132', 'T178')) {
-  # for (subj in c('T051', 'T132')) {
-  # for (subj in c('T068')) {
+test_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test=F) {
+  # for (subj in levels(factor(facs_df$Participant_ID))) {
+  for (subj in c('T005')) {
     
     # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
     # for (treatment in c('PR')) {
@@ -357,17 +367,17 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
       
       title <- ggdraw() + 
         draw_label(paste0(subj, ' - ', treatment, ' - ', get_group_abbr(subj_facs_df$Group[1])), 
-                   fontface='bold',
-                   size=24)
+                   # fontface='bold',
+                   size=20)
       
       
       combined_dt_plot <- plot_grid(title,
-                                    # NULL,
+                                    NULL,
                                     area_plot,
                                     heatmap_plot,
                                     # labels=c('', '', 'A', 'B'),
                                     # label_size=18,
-                                    rel_heights=c(0.2, 1, 1),
+                                    rel_heights=c(0.1, 0.4, 1, 1),
                                     ncol=1)
       
       save_plot(paste0(subj, '_', treatment, '_', area_plot_type, '_combined_', heat_map_type), combined_dt_plot, width=20)
@@ -379,25 +389,21 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
-# facs_df <<- read_data()
+# test_facs_df <<- read_data()
 
 
-# draw_signal_heatmap_plots(facs_df, 'percentage')
-# draw_signal_heatmap_plots(facs_df, 'percentage', test=T)
+# test_signal_heatmap_plots(test_facs_df, 'percentage')
+# test_signal_heatmap_plots(test_facs_df, 'percentage', test=T)
 
 
-
-# draw_area_heatmap_plots(facs_df, 'summative', 'area', test=T)
-# draw_area_heatmap_plots(facs_df, 'summative', 'area')
-
-
-# draw_signal_heatmap_plots(facs_df, 'summative', test=T)
-# draw_area_heatmap_plots(facs_df, 'summative', 'bar', test=T)
+test_signal_heatmap_plots(test_facs_df, 'summative', test=T)
+test_area_heatmap_plots(test_facs_df, 'summative', 'area', test=T)
+test_area_heatmap_plots(test_facs_df, 'summative', 'bar', test=T)
 
 
-draw_signal_heatmap_plots(facs_df, 'summative')
-draw_area_heatmap_plots(facs_df, 'summative', 'bar')
-
+# test_signal_heatmap_plots(test_facs_df, 'summative')
+# test_area_heatmap_plots(test_facs_df, 'summative', 'area')
+# test_area_heatmap_plots(test_facs_df, 'summative', 'bar')
 
 
 
