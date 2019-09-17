@@ -233,10 +233,9 @@ draw_signal_plot <- function(subj_facs_df, subj, treatment) {
 
 
 draw_signal_heatmap_plots <- function(facs_df, type, test=F) {
-  for (subj in levels(factor(facs_df$Participant_ID))) {
+  # for (subj in levels(factor(facs_df$Participant_ID))) {
   # for (subj in c('T051', 'T064', 'T083', 'T085', 'T132', 'T178')) {
-  # for (subj in c('T051', 'T132')) {
-  # for (subj in c('T068')) {
+  for (subj in c('T016', 'T064')) {
     
     # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
     for (treatment in c('DT')) {
@@ -246,7 +245,7 @@ draw_signal_heatmap_plots <- function(facs_df, type, test=F) {
       
       if (test==T) {
         subj_facs_df <- subj_facs_df %>% 
-          slice(1:1000)
+          slice(1:10000)
       }
       
       signal_plot <- draw_signal_plot(subj_facs_df, subj, treatment)
@@ -343,10 +342,9 @@ draw_area_plot <- function(subj_facs_df, subj, treatment, area_plot_type) {
 }
 
 draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test=F) {
-  for (subj in levels(factor(facs_df$Participant_ID))) {
+  # for (subj in levels(factor(facs_df$Participant_ID))) {
   # for (subj in c('T051', 'T064', 'T083', 'T085', 'T132', 'T178')) {
-  # for (subj in c('T051', 'T132')) {
-  # for (subj in c('T068')) {
+  for (subj in c('T016', 'T064')) {
     
     # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
     # for (treatment in c('PR')) {
@@ -357,7 +355,7 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
       
       if (test==T) {
         subj_facs_df <- subj_facs_df %>% 
-          slice(1:1000)
+          slice(1:10000)
       }
       
 
@@ -480,7 +478,7 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
-# facs_df <<- read_data()
+facs_df <<- read_data()
 
 
 # draw_signal_heatmap_plots(facs_df, 'percentage')
@@ -489,7 +487,7 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 
 
 # draw_area_heatmap_plots(facs_df, 'summative', 'area', test=T)
-# draw_area_heatmap_plots(facs_df, 'summative', 'area')
+draw_area_heatmap_plots(facs_df, 'summative', 'area')
 
 
 # draw_signal_heatmap_plots(facs_df, 'summative', test=T)
@@ -505,13 +503,14 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 
 
 
-# draw_panorama_heatmap(facs_df, 'summative')
-# draw_panorama_heatmap(facs_df, 'percentage')
+### draw_panorama_heatmap(facs_df, 'summative')
+### draw_panorama_heatmap(facs_df, 'percentage')
 
 
-draw_panorama_heatmap(facs_df, 'no_text', test=T)
-# draw_panorama_heatmap(facs_df, 'summative', test=T)
-# draw_panorama_heatmap(facs_df, 'percentage', test=T)
+# draw_panorama_heatmap(facs_df, 'no_text', test=T)
+
+### draw_panorama_heatmap(facs_df, 'summative', test=T)
+### draw_panorama_heatmap(facs_df, 'percentage', test=T)
 
 
 
