@@ -28,6 +28,8 @@ setwd(current_dir)
 
 
 facs_size <- 7
+geom_text_size <- 4.5
+
 emotion_cols <- c('F_Angry',
                   'F_Disgusted',
                   'F_Afraid',
@@ -78,14 +80,17 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
     geom_tile(aes(fill=diagonal_val)) +
     # geom_text(aes(label=diagonal_val)) +
     # geom_text(aes(label=diagonal_percentage)) +
-    scale_fill_gradientn(colours = c("lightgray","dimgray"), name = "") +
+    scale_fill_gradientn(colours = c("lightgray","dimgray"), 
+                         name = "") +
+    # guides(fill = guide_legend(order = 0)) +
 
     new_scale("fill") +
     geom_tile(aes(fill=non_diagonal_upper_matrix_val), 
               data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0)) +
     # geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0)) +
     # geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0)) +
-    scale_fill_gradientn(colours = c("white", "yellow", "pink"), name = "") +
+    scale_fill_gradientn(colours = c("white", "yellow", "pink"), 
+                         name = "") +
     
     new_scale("fill") +
     geom_tile(aes(fill=non_diagonal_lower_matrix_val), 
@@ -106,12 +111,12 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
 
   if (type=='summative') {
     heatmap_plot <- heatmap_plot + 
-      geom_text(aes(label=diagonal_val)) +
-      geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0))
+      geom_text(aes(label=diagonal_val), size=geom_text_size) +
+      geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0), size=geom_text_size)
   } else if (type=='percentage') {
     heatmap_plot <- heatmap_plot + 
-      geom_text(aes(label=diagonal_percentage)) +
-      geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0))
+      geom_text(aes(label=diagonal_percentage), size=geom_text_size) +
+      geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0), size=geom_text_size)
   } 
   
   return(heatmap_plot)
@@ -201,6 +206,7 @@ draw_dual_task_group_plots <- function(facs_df, type, test=F) {
 
 
 
+
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
@@ -208,13 +214,19 @@ draw_dual_task_group_plots <- function(facs_df, type, test=F) {
 
 # get_stats(facs_df)
 
-draw_dual_task_group_plots(facs_df, 'summative')
+# draw_dual_task_group_plots(facs_df, 'summative')
 # draw_dual_task_group_plots(facs_df, 'percentage')
 
 
 
 # draw_dual_task_group_plots(facs_df, 'summative', test=T)
 # draw_dual_task_group_plots(facs_df, 'percentage', test=T)
+
+
+
+
+
+
 
 
 
