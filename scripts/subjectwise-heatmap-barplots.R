@@ -451,7 +451,17 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
 }
 
 
-draw_panaroma_heat_map_plot <- function(heat_map_df, type, plot_title) {
+draw_panaroma_heat_map_plot <- function(heat_map_df, subj_facs_df, type, plot_title) {
+  temp_subj_facs_df <- subj_facs_df %>% 
+    select(Treatment_Time_New,
+           F_Angry, 
+           F_Disgusted, 
+           F_Afraid, 
+           F_Happy, 
+           F_Sad, 
+           F_Surprised, 
+           F_Neutral) %>% 
+    na.omit()
   
   heatmap_plot <- ggplot(heat_map_df, aes(x=row_name, y=col_name)) +
     
@@ -475,7 +485,8 @@ draw_panaroma_heat_map_plot <- function(heat_map_df, type, plot_title) {
               show.legend = FALSE) +
     scale_fill_gradientn(colours = c("white")) +
     
-    ggtitle(plot_title) +
+    # ggtitle(plot_title) +
+    ggtitle(paste0(plot_title, " / ", nrow(temp_subj_facs_df))) +
     xlab("") +
     ylab("") +
     theme_bw() +
@@ -486,8 +497,9 @@ draw_panaroma_heat_map_plot <- function(heat_map_df, type, plot_title) {
           plot.margin=unit(c(t = 1, r = 1.8, b = 2, l = 0), "lines"),
           plot.title = element_text(
             margin=margin(t = 0, r = 0, b = -2, l = 0, unit = "pt"),
-            hjust = 0.5, 
-            size=16)) +
+            hjust = 0.5,
+            # font_face="Bold",
+            size=20)) +
     labs(fill="") +
     scale_x_discrete(position = "top")
   
@@ -514,29 +526,39 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
       filter(Group %in% paste0(group, c('H', 'L')))
  
     for (subj in levels(factor(group_facs_df$Participant_ID))) {
+      
+      print(subj)
+      
       subj_facs_df <- group_facs_df %>%
         filter(Participant_ID==subj) 
       
       if (test==T) {
         subj_facs_df <- subj_facs_df %>% 
-          slice(1:100)
+          slice(1:10)
       }
       
       heat_map_df <- get_heat_map_df(subj_facs_df, plot_type='panorama')
-      heatmap_plot <- draw_panaroma_heat_map_plot(heat_map_df, type, subj)
+      heatmap_plot <- draw_panaroma_heat_map_plot(heat_map_df, subj_facs_df, type, subj)
       plot_list[[length(plot_list)+1]] <- heatmap_plot
     }
   }
   
 
-  panorama_batch_plot <- plot_grid(plotlist=plot_list[1:13],
-                                   ncol=5)
-  panorama_continual_plot <- plot_grid(plotlist=plot_list[14:26],
-                                      ncol=5)
+  panorama_batch_plot <- plot_grid(plotlist=plot_list[1:13], ncol=5) 
   
-  panorama_plot <- plot_grid(panorama_batch_plot,
+  panorama_continual_plot <- plot_grid(plotlist=plot_list[14:26], ncol=5)
+  
+  panorama_plot <- plot_grid(NULL,
+                             panorama_batch_plot,
+                             NULL,
                              panorama_continual_plot,
+                             labels=c('', 'A', '', 'B'),
+                             # label_y = -0.2,
+                             vjust=1,
+                             label_size=36,
+                             rel_heights=c(0.04, 1, 0.2, 1),
                              ncol=1)
+  
   save_plot(paste0('panorama_heatmap_', type), panorama_plot, width=20, height=24)
 }
 
@@ -574,7 +596,8 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 ### draw_panorama_heatmap(facs_df, 'percentage')
 
 
-draw_panorama_heatmap(facs_df, 'no_text', test=T)
+# draw_panorama_heatmap(facs_df, 'no_text', test=T)
+draw_panorama_heatmap(facs_df, 'no_text')
 
 ### draw_panorama_heatmap(facs_df, 'summative', test=T)
 ### draw_panorama_heatmap(facs_df, 'percentage', test=T)
