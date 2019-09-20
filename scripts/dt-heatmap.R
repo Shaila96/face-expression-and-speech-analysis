@@ -55,10 +55,11 @@ group_list <- c('B', 'C')
 read_data <- function() {
   ## Making the df as global variable, as it takes a lot of time to load.
   ## So, during one R session we load this df once
-  facs_df <<- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>% 
+  facs_df <- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>% 
     mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
-  
   # print(str(facs_df))
+  
+  ques_df <<- custom_read_csv(file.path(current_dir, data_dir, "Questionnaire Data.csv"))
   
   return(facs_df)
 }
@@ -71,6 +72,48 @@ get_stats <- function(facs_df) {
     group_by(Group) %>%
     summarise(Total_Group=n())
   print(temp_facs_df)
+  
+  subj_df <- facs_df %>% 
+    select(Participant_ID) %>% 
+    group_by(Participant_ID) %>% 
+    summarize(n())
+  convert_to_csv(subj_df, file.path(current_dir, curated_data_dir, "subject_list.csv"))
+  
+  # View(subj_df)
+  # View(ques_df)
+  
+  ques_df <- ques_df %>%
+    merge(subj_df, by="Participant_ID")
+  
+  View(ques_df)
+  
+  
+  print(paste0("Mean age: ", mean(ques_df$Age)))
+  print(paste0("SD age: ", sd(ques_df$Age)))
+  
+  
+  ques_df_1 <- ques_df %>% 
+    group_by(Gender) %>% 
+    summarize(n())
+  print(ques_df_1)
+  # View(ques_df_1)
+  
+  
+  ques_df_2 <- ques_df %>% 
+    mutate(email_grp=ifelse(Group %in% c("BH", "BL"), "B", "C")) %>% 
+    group_by(email_grp, Gender) %>% 
+    summarize(grp_gender=n())
+  print(ques_df_2)
+  # View(ques_df_2)
+  
+  
+  ques_df_3 <- ques_df %>% 
+    mutate(email_grp=ifelse(Group %in% c("BH", "BL"), "B", "C")) %>% 
+    group_by(email_grp) %>% 
+    summarize(grp_mean_age=mean(Age),
+              grp_sd_age=sd(Age))
+  print(ques_df_3)
+  # View(ques_df_3)
 }
 
 draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
@@ -210,9 +253,9 @@ draw_dual_task_group_plots <- function(facs_df, type, test=F) {
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
-# facs_df <- read_data()
+# facs_df <<- read_data()
 
-# get_stats(facs_df)
+get_stats(facs_df)
 
 # draw_dual_task_group_plots(facs_df, 'summative')
 # draw_dual_task_group_plots(facs_df, 'percentage')

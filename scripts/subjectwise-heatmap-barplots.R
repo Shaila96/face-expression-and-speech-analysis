@@ -125,7 +125,7 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
 
 
 
-get_heat_map_df <- function(subj_facs_df, group='no_group', plot_type='None') {
+get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_type='None') {
   ## Initializing matrix with all 0
   final_matrix = matrix(0, facs_size, facs_size) 
   
@@ -179,6 +179,21 @@ get_heat_map_df <- function(subj_facs_df, group='no_group', plot_type='None') {
   
   # View(heat_map_df)
   # convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
+  # convert_to_csv(final_matrix, file.path(current_dir, curated_data_dir, paste0(subj, '.csv')), row_names=T)
+  
+  # print(group)
+  # print(get_group_abbr(group))
+  file_path=file.path(current_dir, curated_data_dir, get_group_abbr(group), paste0(subj, '.csv'))
+  # print(file_path)
+  
+  write.table(final_matrix, 
+              file = file_path, 
+              row.names=T,
+              col.names=NA,
+              sep = ',')
+  
+  
+  
   return(heat_map_df)
 }
 
@@ -451,6 +466,53 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
 }
 
 
+get_subj_co_occurance_matrices <- function(facs_df, test=F) {
+  for (group in group_list) {
+    
+    grp_facs_df <- facs_df %>%
+      filter(Group %in% paste0(group, c('H', 'L')))
+    
+    for (subj in levels(factor(grp_facs_df$Participant_ID))) {
+      # for (subj in c('T016', 'T064')) {
+      # for (subj in c('T064')) {
+      
+      print(subj)
+      
+      # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
+      # for (treatment in c('PR')) {
+      for (treatment in c('DT')) {
+        
+        subj_facs_df <- grp_facs_df %>%
+          filter(Participant_ID==subj & Treatment==treatment) 
+        
+        if (test==T) {
+          subj_facs_df <- subj_facs_df %>% 
+            slice(1:100)
+        }
+        
+        heat_map_df <- get_heat_map_df(subj_facs_df, subj=subj, group=subj_facs_df$Group)
+      }
+    }
+  }
+}
+
+
+get_grp_co_occurance_matrices <- function(facs_df, type, test=F) {
+  for (group in group_list) {
+    dt_facs_df <- facs_df %>%
+      filter(Treatment=='DT' & Group %in% paste0(group, c('H', 'L'))) 
+    
+    if (test==T) {
+      dt_facs_df <- dt_facs_df %>% 
+        slice(1:100)
+    }
+    
+    heat_map_df <- get_heat_map_df(dt_facs_df, subj=group)
+  } 
+}
+
+
+
 draw_panaroma_heat_map_plot <- function(heat_map_df, subj_facs_df, type, plot_title) {
   temp_subj_facs_df <- subj_facs_df %>% 
     select(Treatment_Time_New,
@@ -465,16 +527,14 @@ draw_panaroma_heat_map_plot <- function(heat_map_df, subj_facs_df, type, plot_ti
   
   heatmap_plot <- ggplot(heat_map_df, aes(x=row_name, y=col_name)) +
     
-    geom_tile(aes(fill=diagonal_val),
-              show.legend = FALSE) +
+    geom_tile(aes(fill=diagonal_val)) +
     # geom_text(aes(label=diagonal_val)) +
     # geom_text(aes(label=diagonal_percentage)) +
     scale_fill_gradientn(colours = c("lightgray","dimgray"), name = "") +
     
     new_scale("fill") +
     geom_tile(aes(fill=non_diagonal_upper_matrix_val), 
-              data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0),
-              show.legend = FALSE) +
+              data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0)) +
     # geom_text(aes(label=non_diagonal_upper_matrix_val), data = subset(heat_map_df, non_diagonal_upper_matrix_val >= 0)) +
     # geom_text(aes(label=non_diagonal_upper_matrix_percentage), data = subset(heat_map_df, non_diagonal_upper_matrix_percentage >= 0)) +
     scale_fill_gradientn(colours = c("white", "yellow", "pink"), name = "") +
@@ -493,7 +553,7 @@ draw_panaroma_heat_map_plot <- function(heat_map_df, subj_facs_df, type, plot_ti
     theme(text = element_text(size=20),
           panel.background = element_blank(),
           panel.grid = element_blank(),
-          legend.position = 'left',
+          legend.position = 'none',
           plot.margin=unit(c(t = 1, r = 1.8, b = 2, l = 0), "lines"),
           plot.title = element_text(
             margin=margin(t = 0, r = 0, b = -2, l = 0, unit = "pt"),
@@ -579,6 +639,14 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 # draw_area_heatmap_plots(facs_df, 'summative', 'area')
 
 
+# get_subj_co_occurance_matrices(facs_df, test=T)
+get_subj_co_occurance_matrices(facs_df)
+
+
+# get_grp_co_occurance_matrices(facs_df, test=T)
+# get_grp_co_occurance_matrices(facs_df)
+
+
 # draw_signal_heatmap_plots(facs_df, 'summative', test=T)
 # draw_area_heatmap_plots(facs_df, 'summative', 'bar', test=T)
 
@@ -597,7 +665,7 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 
 
 # draw_panorama_heatmap(facs_df, 'no_text', test=T)
-draw_panorama_heatmap(facs_df, 'no_text')
+# draw_panorama_heatmap(facs_df, 'no_text')
 
 ### draw_panorama_heatmap(facs_df, 'summative', test=T)
 ### draw_panorama_heatmap(facs_df, 'percentage', test=T)
