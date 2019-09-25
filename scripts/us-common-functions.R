@@ -1,5 +1,6 @@
 scripts_dir <- 'scripts'
 plots_dir <- 'plots'
+all_session_plots_dir <- 'all_session_plots'
 log_dir <- 'log-files'
 
 data_dir <- 'data'
