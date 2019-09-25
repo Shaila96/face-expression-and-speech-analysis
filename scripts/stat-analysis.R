@@ -64,6 +64,14 @@ read_data <- function() {
   return(facs_df)
 }
 
+get_mean <- function(x, na.rm = T) (mean(x, na.rm = na.rm))
+# get_mean <- function(x, na.rm = T) (mean(x, na.rm = na.rm))*get_total_frame(x) / 50*60
+
+get_total_frame <- function(x) length(x)
+
+
+
+
 get_stats <- function(facs_df) {
   temp_facs_df <- facs_df %>% 
     select(Participant_ID, Group) %>% 
@@ -117,13 +125,48 @@ get_stats <- function(facs_df) {
 }
 
 
+
+
+get_t_test_weighted_mean <- function(facs_df) {
+  # for (group in group_list) {
+  #   
+  #   group_facs_df <- facs_df %>%
+  #     filter(Treatment=='DT' & Group %in% paste0(group, c('H', 'L'))) 
+  #   
+  #   for (subj in levels(factor(group_facs_df$Participant_ID))) {
+  #     
+  #     subj_facs_df <- group_facs_df %>%
+  #       filter(Participant_ID==subj)
+  #       
+  # }
+  
+
+  
+  temp_facs_df <- facs_df %>%
+    select(Participant_ID, Group, Treatment, emotion_cols) %>%
+    filter(Treatment=='DT') %>% 
+    filter_at(vars(emotion_cols), all_vars(!is.na(.))) %>%
+    group_by(Participant_ID, Group) %>% 
+    summarise_at(vars(emotion_cols), funs(sum=sum,
+                                          mean=get_mean,
+                                          frames=get_total_frame))
+
+    
+    
+  View(temp_facs_df)
+}
+
+
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
-facs_df <<- read_data()
+# facs_df <<- read_data()
 
 
-get_stats(facs_df)
+# get_stats(facs_df)
+
+
+get_t_test_weighted_mean(facs_df)
 
 
 
