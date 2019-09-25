@@ -1,5 +1,6 @@
 scripts_dir <- 'scripts'
 plots_dir <- 'plots'
+all_session_plots_dir <- 'all_session_plots'
 log_dir <- 'log-files'
 
 data_dir <- 'data'
@@ -102,8 +103,8 @@ custom_read_csv <- function(file_name) {
   return(read.csv(file_name, stringsAsFactors=F))
 }
 
-convert_to_csv <- function(df, file_path) {
-  write.table(df, file = file_path, row.names=F, sep = ',')
+convert_to_csv <- function(df, file_path, row_names=F) {
+  write.table(df, file = file_path, row.names=row_names, sep = ',')
 }
 
 save_plot <- function(plot_name, plot, width=default_plot_width, height=default_plot_height) {
