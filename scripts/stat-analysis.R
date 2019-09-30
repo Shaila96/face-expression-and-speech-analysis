@@ -71,7 +71,21 @@ get_mean_vals <- function(x, na.rm = T) (mean(x, na.rm = na.rm))*get_total_frame
 get_total_frame <- function(x) length(x)
 
 
+get_group_name <- function(group_name) {
+  if(group_name=='B') {
+    return('Batch')
+  } else if(group_name=='C') {
+    return('Continual')
+  }
+}
 
+get_type_name <- function(type) {
+  if(type=='sum') {
+    return('Summative')
+  }
+  
+  return(type)
+}
 
 get_stats <- function(facs_df) {
   temp_facs_df <- facs_df %>% 
@@ -128,6 +142,8 @@ get_stats <- function(facs_df) {
 
 
 generate_mean_values <- function(facs_df) {
+  glass_df <- custom_read_csv(file.path(current_dir, curated_data_dir, 'subject_info.csv'))
+  
   mean_facs_df <- facs_df %>%
     select(Participant_ID, Group, Treatment, emotion_cols) %>%
     filter(Treatment=='DT') %>%
@@ -136,8 +152,9 @@ generate_mean_values <- function(facs_df) {
     summarise_at(vars(emotion_cols), funs(mean=get_mean,
                                           w_mean=get_mean_vals,
                                           sum=sum,
-                                          frames=get_total_frame))
-  #   mutate(Group_Type=str_extract(Group, "[^.]"))
+                                          frames=get_total_frame)) %>% 
+    mutate(Group_Type=get_group_name(str_extract(Group, "[^.]"))) %>% 
+    merge(glass_df[, c('Participant_ID', 'Has_Glass')], by="Participant_ID")
 
   View(mean_facs_df)
   convert_to_csv(mean_facs_df, file.path(current_dir, curated_data_dir, "mean_facs_dt.csv"))
@@ -160,16 +177,17 @@ is_normal <- function(df) {
   return(F)
 }
 
-check_normality_and_log_transform <- function(mean_facs_df, exp) {
+check_normality_and_log_transform <- function(mean_facs_df, exp, type) {
+  col_name <- paste0(exp, '_', type)
+  
   batch_df <- mean_facs_df %>% filter(Group %in% c('BH', 'BL'))
   continual_df <- mean_facs_df %>% filter(Group %in% c('CH', 'CL'))
   
-  print(batch_df)
-  print(continual_df)
+  batch_data <- batch_df[[col_name]]
+  continual_data <- continual_df[[col_name]]
   
-  batch_data <- batch_df[[exp]]
-  continual_data <- continual_df[[exp]]
-  
+  print(batch_data)
+  print(continual_data)
   
   if (!is_normal(batch_data) | !is_normal(continual_data)) {
     print('-------- NOT NORMAL DISTRIBUTION')
@@ -201,11 +219,24 @@ check_normality_and_log_transform <- function(mean_facs_df, exp) {
   
   
   
-  box_plot_df <- mean_facs_df
-  
-  
-  
-  
+  plot <- mean_facs_df %>%
+    ggplot(aes_string("Group_Type", col_name, fill="Group_Type")) +
+    geom_boxplot(width=0.3) +
+    ggtitle(paste0(str_sub(exp, 3), ': ', get_type_name(type))) +
+    ylab('') +
+    xlab('') +
+    theme_bw() +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line = element_line(colour = "black"),
+      plot.title = element_text(hjust = 0.5,
+                                size=14,
+                                margin=margin(t=0, r=0, b=2, l=0)), ##top, right, bottom, left
+      legend.position='none'
+    )
+      
+  print(plot)
 }
 
 
@@ -223,19 +254,19 @@ get_t_test_result <- function(mean_facs_df, type, remove_small_dataset=F) {
                                      'T124',
                                      'T157'
                                      )))
-    # convert_to_csv(mean_facs_df, file.path(current_dir, curated_data_dir, "mean_facs_dt_filtered.csv"))
+    convert_to_csv(mean_facs_df, file.path(current_dir, curated_data_dir, "mean_facs_dt_filtered.csv"))
   }
 
   
-  for (exp in paste0(c(emotion_cols), '_', type)) {
+  for (exp in emotion_cols) {
     print('----------------------------')
     print(exp)
     print('----------------------------')
     
-    exp_mean_df <- mean_facs_df %>%
-      select(Group, exp)
+    # exp_mean_df <- mean_facs_df %>%
+    #   select(Group, exp)
 
-    check_normality_and_log_transform(exp_mean_df, exp)
+    check_normality_and_log_transform(mean_facs_df, exp, type)
   }
   
 
@@ -266,7 +297,7 @@ get_t_test_result(mean_facs_df, 'sum')
 
 
 
-# get_t_test_result(mean_facs_df, 'mean', remove_small_dataset=T)
+get_t_test_result(mean_facs_df, 'mean', remove_small_dataset=T)
 
 
 
