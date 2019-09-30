@@ -65,7 +65,8 @@ read_data <- function() {
 }
 
 get_mean <- function(x, na.rm = T) (mean(x, na.rm = na.rm))
-# get_mean <- function(x, na.rm = T) (mean(x, na.rm = na.rm))*get_total_frame(x) / 50*60
+
+get_mean_vals <- function(x, na.rm = T) (mean(x, na.rm = na.rm))*get_total_frame(x) / 50*60*10
 
 get_total_frame <- function(x) length(x)
 
@@ -126,34 +127,124 @@ get_stats <- function(facs_df) {
 
 
 
+generate_mean_values <- function(facs_df) {
+  mean_facs_df <- facs_df %>%
+    select(Participant_ID, Group, Treatment, emotion_cols) %>%
+    filter(Treatment=='DT') %>%
+    filter_at(vars(emotion_cols), all_vars(!is.na(.))) %>%
+    group_by(Participant_ID, Group) %>%
+    summarise_at(vars(emotion_cols), funs(mean=get_mean,
+                                          w_mean=get_mean_vals,
+                                          sum=sum,
+                                          frames=get_total_frame))
+  #   mutate(Group_Type=str_extract(Group, "[^.]"))
 
-get_t_test_weighted_mean <- function(facs_df) {
-  # for (group in group_list) {
-  #   
-  #   group_facs_df <- facs_df %>%
-  #     filter(Treatment=='DT' & Group %in% paste0(group, c('H', 'L'))) 
-  #   
+  View(mean_facs_df)
+  convert_to_csv(mean_facs_df, file.path(current_dir, curated_data_dir, "mean_facs_dt.csv"))
+}
+
+
+get_mean_values <- function(facs_df) {
+  
+  generate_mean_values(facs_df)
+  
+  mean_facs_df <- custom_read_csv(file.path(current_dir, curated_data_dir, "mean_facs_dt.csv"))
+  return(mean_facs_df)
+}
+
+is_normal <- function(df) {
+  if (shapiro.test(df)$p.value>=0.05) {
+    return(T)
+  }
+  
+  return(F)
+}
+
+check_normality_and_log_transform <- function(mean_facs_df, exp) {
+  batch_df <- mean_facs_df %>% filter(Group %in% c('BH', 'BL'))
+  continual_df <- mean_facs_df %>% filter(Group %in% c('CH', 'CL'))
+  
+  print(batch_df)
+  print(continual_df)
+  
+  batch_data <- batch_df[[exp]]
+  continual_data <- continual_df[[exp]]
+  
+  
+  if (!is_normal(batch_data) | !is_normal(continual_data)) {
+    print('-------- NOT NORMAL DISTRIBUTION')
+    batch_data <- log(batch_data)
+    continual_data <- log(continual_data)
+    print('-------- LOG TRANSFORMED')
+  }
+  
+  ###############################################
+  # TAMU PEOPLE LOG TRANSFORMED ALTHOUGH NORMAL #
+  ###############################################
+  # batch_data <- log(batch_data)
+  # continual_data <- log(continual_data)
+  ###############################################
+  
+  if (is_normal(batch_data) & is_normal(continual_data)) {
+    print('BOTH NORMAL DISTRIBUTION')
+    print('Performing T-Test')
+    t_test <- t.test(batch_data, continual_data)
+    print(t_test)
+    
+  } else {
+    print('-------- NOT NORMAL DISTRIBUTION AFTER LOG TRANSFORMATION')
+    print('Performing U Rank Test')
+    w_test <- wilcox.test(batch_data, continual_data)
+    print(w_test)
+  }
+  
+  
+  
+  
+  box_plot_df <- mean_facs_df
+  
+  
+  
+  
+}
+
+
+
+
+get_t_test_result <- function(mean_facs_df, type, remove_small_dataset=F) {
+  if (remove_small_dataset==T) {
+    mean_facs_df <- mean_facs_df %>%
+      filter(!(Participant_ID %in% c('T077', 
+                                     'T139',
+                                     
+                                     'T063',
+                                     'T092',
+                                     'T094',
+                                     'T124',
+                                     'T157'
+                                     )))
+    # convert_to_csv(mean_facs_df, file.path(current_dir, curated_data_dir, "mean_facs_dt_filtered.csv"))
+  }
+
+  
+  for (exp in paste0(c(emotion_cols), '_', type)) {
+    print('----------------------------')
+    print(exp)
+    print('----------------------------')
+    
+    exp_mean_df <- mean_facs_df %>%
+      select(Group, exp)
+
+    check_normality_and_log_transform(exp_mean_df, exp)
+  }
+  
+
   #   for (subj in levels(factor(group_facs_df$Participant_ID))) {
-  #     
+  # 
   #     subj_facs_df <- group_facs_df %>%
   #       filter(Participant_ID==subj)
-  #       
+  # 
   # }
-  
-
-  
-  temp_facs_df <- facs_df %>%
-    select(Participant_ID, Group, Treatment, emotion_cols) %>%
-    filter(Treatment=='DT') %>% 
-    filter_at(vars(emotion_cols), all_vars(!is.na(.))) %>%
-    group_by(Participant_ID, Group) %>% 
-    summarise_at(vars(emotion_cols), funs(sum=sum,
-                                          mean=get_mean,
-                                          frames=get_total_frame))
-
-    
-    
-  View(temp_facs_df)
 }
 
 
@@ -166,12 +257,16 @@ get_t_test_weighted_mean <- function(facs_df) {
 # get_stats(facs_df)
 
 
-get_t_test_weighted_mean(facs_df)
+mean_facs_df <- get_mean_values(facs_df)
+
+
+get_t_test_result(mean_facs_df, 'sum')
+# get_t_test_result(mean_facs_df, 'mean')
+# get_t_test_result(mean_facs_df, 'w_mean')
 
 
 
-
-
+# get_t_test_result(mean_facs_df, 'mean', remove_small_dataset=T)
 
 
 

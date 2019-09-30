@@ -604,7 +604,6 @@ draw_panaroma_heat_map_plot <- function(heat_map_df, subj_facs_df, type, plot_ti
 draw_panorama_heatmap <- function(facs_df, type, test=F) {
   for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
   # for (treatment in c('DT')) {
-    
     plot_list <- list()
     
     for (group in group_list) {
