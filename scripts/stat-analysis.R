@@ -9,9 +9,7 @@ library(data.table)
 library(reshape2)
 library(ggnewscale)
 library(cowplot)
-library(nonpar)
-library(cooccur)
-library(EMT)
+library(stringr)
 
 
 
@@ -291,13 +289,13 @@ get_t_test_result <- function(mean_facs_df, type, remove_small_dataset=F) {
 mean_facs_df <- get_mean_values(facs_df)
 
 
-get_t_test_result(mean_facs_df, 'sum')
+# get_t_test_result(mean_facs_df, 'sum')
 # get_t_test_result(mean_facs_df, 'mean')
 # get_t_test_result(mean_facs_df, 'w_mean')
 
 
 
-get_t_test_result(mean_facs_df, 'mean', remove_small_dataset=T)
+# get_t_test_result(mean_facs_df, 'mean', remove_small_dataset=T)
 
 
 

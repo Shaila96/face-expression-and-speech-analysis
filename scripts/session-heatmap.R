@@ -187,7 +187,11 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
       
       ## Convert into upper triangle matrix
       current_matrix[lower.tri(current_matrix)] <- 0
-      # print(current_matrix)
+      print(current_matrix)
+      
+      ## Make double of the upper traingle matrix
+      current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
+      print(current_matrix)
       
       ## Normalize with the sum of the elements of the matrix
       current_matrix <- current_matrix/sum(current_matrix)
@@ -222,7 +226,8 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
 
 
 draw_session_group_plots <- function(facs_df, type, test=F) {
-  for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
+  for (treatment in c('RB')) {
+  # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
     
     plot_list <- list()
     
@@ -232,7 +237,7 @@ draw_session_group_plots <- function(facs_df, type, test=F) {
       
       if (test==T) {
         dt_facs_df <- dt_facs_df %>% 
-          slice(1:1000)
+          slice(1:1)
       }
   
       heat_map_df <- get_heat_map_df(dt_facs_df, group)
@@ -261,7 +266,7 @@ draw_session_group_plots <- function(facs_df, type, test=F) {
 # facs_df <<- read_data()
 
 
-get_stats(facs_df)
+# get_stats(facs_df)
 
 
 # draw_session_group_plots(facs_df, 'summative')
@@ -269,7 +274,7 @@ get_stats(facs_df)
 
 
 
-# draw_session_group_plots(facs_df, 'summative', test=T)
+draw_session_group_plots(facs_df, 'summative', test=T)
 # draw_session_group_plots(facs_df, 'percentage', test=T)
 
 
