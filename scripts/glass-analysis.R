@@ -256,7 +256,7 @@ analyze_data <- function() {
 get_subject_glass_data <- function() {
   ## T121, T124, T151, T157 --> initially 1-2 min glass
   ## T132, T166, T175, T178 --> RB glass, not other sessions
-  subj_with_glasses <- c('T021', 'T051', 'T064', 'T077', 'T079', 'T094', 'T098', 'T139', 'T144')
+  subj_with_glasses <- c('T021', 'T051', 'T064', 'T077', 'T079', 'T094', 'T139', 'T144')
   
   subj_df <- facs_df %>% 
     group_by(Participant_ID, Group) %>%
@@ -273,10 +273,10 @@ get_subject_glass_data <- function() {
 # facs_df <<- read_data()
 
 
-# get_subject_glass_data()
+get_subject_glass_data()
 
 
-analyze_data()
+# analyze_data()
 
 
 # draw_glass_comparison_heat_map(facs_df)

@@ -75,6 +75,14 @@ get_group_abbr <- function(group_name_full) {
   }
 }
 
+get_full_group_name <- function(group_name) {
+  if (group_name=='B') {
+    return('Batch')
+  } else if (group_name=='C') {
+    return('Continual')
+  }
+}
+
 draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
   
   heatmap_plot <- ggplot(heat_map_df, aes(x=row_name, y=col_name)) +
@@ -125,7 +133,8 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
 
 
 
-get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_type='None') {
+get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_type='none', treatment='none') {
+
   ## Initializing matrix with all 0
   final_matrix = matrix(0, facs_size, facs_size) 
   
@@ -147,8 +156,12 @@ get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_ty
       current_matrix[lower.tri(current_matrix)] <- 0
       # print(current_matrix)
       
+      ## Make double of the upper traingle matrix
+      current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
+      # print(current_matrix)
+      
       ## Normalize with the sum of the elements of the matrix
-      current_matrix <- current_matrix/sum(current_matrix)
+      # current_matrix <- current_matrix/sum(current_matrix)
       # print(current_matrix)
       
       ## Add to the final matrix
@@ -183,16 +196,26 @@ get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_ty
   
   
   ###########################################
-  # file_path=file.path(current_dir, 
-  #                     curated_data_dir, 
-  #                     get_group_abbr(group), 
-  #                     paste0(subj, '.csv'))
-  # 
-  # write.table(final_matrix, 
-  #             file = file_path, 
-  #             row.names=T,
-  #             col.names=NA,
-  #             sep = ',')
+  # print(current_dir)
+  # print(curated_data_dir)
+  # print(group)
+  # print(get_group_abbr(group))
+  # print(treatment)
+  # print(subj)
+  
+  file_path=file.path(current_dir,
+                      curated_data_dir,
+                      'Subj Data',
+                      get_full_group_name(group),
+                      treatment,
+                      paste0(subj, '.csv'))
+
+  # print(file_path)
+  write.table(final_matrix,
+              file = file_path,
+              row.names=T,
+              col.names=NA,
+              sep = ',')
   ###########################################
   
   
@@ -604,7 +627,6 @@ draw_panaroma_heat_map_plot <- function(heat_map_df, subj_facs_df, type, plot_ti
 draw_panorama_heatmap <- function(facs_df, type, test=F) {
   for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
   # for (treatment in c('DT')) {
-    
     plot_list <- list()
     
     for (group in group_list) {
@@ -622,7 +644,11 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
             slice(1:10)
         }
         
-        heat_map_df <- get_heat_map_df(subj_facs_df, plot_type='panorama')
+        heat_map_df <- get_heat_map_df(subj_facs_df, 
+                                       plot_type='panorama', 
+                                       group=group, 
+                                       subj=subj, 
+                                       treatment=treatment)
         heatmap_plot <- draw_panaroma_heat_map_plot(heat_map_df, subj_facs_df, type, subj)
         plot_list[[length(plot_list)+1]] <- heatmap_plot
       }
