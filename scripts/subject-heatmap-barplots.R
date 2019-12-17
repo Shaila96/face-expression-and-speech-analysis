@@ -136,7 +136,7 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
 get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_type='none', treatment='none') {
 
   ## Initializing matrix with all 0
-  final_matrix = matrix(0, facs_size, facs_size) 
+  final_matrix = matrix(0, facs_size, facs_size)
   
   # print(subj_facs_df[c(1:10), emotion_cols])
   # convert_to_csv(subj_facs_df[c(1:10), emotion_cols], 'facs_test.csv')
@@ -156,13 +156,24 @@ get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_ty
       current_matrix[lower.tri(current_matrix)] <- 0
       # print(current_matrix)
       
+      #############################################################################
+      #               NEW METHOD
+      #############################################################################
       ## Make double of the upper traingle matrix
+      ## Add the upper and lower triagnle value
       current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
       # print(current_matrix)
+      #############################################################################
       
+      
+      
+      #############################################################################
+      #               OLD METHOD
+      #############################################################################
       ## Normalize with the sum of the elements of the matrix
       # current_matrix <- current_matrix/sum(current_matrix)
       # print(current_matrix)
+      #############################################################################
       
       ## Add to the final matrix
       final_matrix <- final_matrix + current_matrix
