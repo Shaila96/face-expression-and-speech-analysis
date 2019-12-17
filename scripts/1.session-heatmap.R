@@ -52,17 +52,39 @@ group_list <- c('B', 'C')
 #-------------------------#
 #---FUNCTION DEFINITION---#
 #-------------------------#
+
+#---------------- From single file
 read_data <- function() {
   ## Making the df as global variable, as it takes a lot of time to load.
   ## So, during one R session we load this df once
-  facs_df <- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>% 
+  facs_df <- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>%
     mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
   # print(str(facs_df))
+
+  ques_df <<- custom_read_csv(file.path(current_dir, data_dir, "Questionnaire Data.csv"))
+
+  return(facs_df)
+}
+
+
+read_new_data <- function() {
+  ## Making the df as global variable, as it takes a lot of time to load.
+  ## So, during one R session we load this df once
+  b_facs_df <- custom_read_csv(file.path(current_dir, data_dir, final_data_dir, b_facs_file_name))
+  c_facs_df <- custom_read_csv(file.path(current_dir, data_dir, final_data_dir, c_facs_file_name))
+  
+  facs_df <- rbind(b_facs_df, c_facs_df) %>% 
+    mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
+  
+  print(str(facs_df))
+  View(facs_df)
+  
   
   ques_df <<- custom_read_csv(file.path(current_dir, data_dir, "Questionnaire Data.csv"))
   
   return(facs_df)
 }
+
 
 get_stats <- function(facs_df) {
   temp_facs_df <- facs_df %>% 
@@ -187,15 +209,28 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
       
       ## Convert into upper triangle matrix
       current_matrix[lower.tri(current_matrix)] <- 0
-      print(current_matrix)
-      
-      ## Make double of the upper traingle matrix
-      current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
-      print(current_matrix)
-      
-      ## Normalize with the sum of the elements of the matrix
-      current_matrix <- current_matrix/sum(current_matrix)
       # print(current_matrix)
+      
+      
+      
+      #############################################################################
+      #               NEW METHOD
+      #############################################################################
+      ## Make double of the upper traingle matrix
+      ## Add the upper and lower triagnle value
+      current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
+      # print(current_matrix)
+      #############################################################################
+      
+      
+      
+      #############################################################################
+      #               OLD METHOD
+      #############################################################################
+      ## Normalize with the sum of the elements of the matrix
+      # current_matrix <- current_matrix/sum(current_matrix)
+      # print(current_matrix)
+      #############################################################################
       
       ## Add to the final matrix
       final_matrix <- final_matrix + current_matrix
@@ -218,7 +253,7 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
            diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
            non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
   
-  View(heat_map_df)
+  # View(heat_map_df)
   # convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
   return(heat_map_df)
 }
@@ -226,21 +261,21 @@ get_heat_map_df <- function(subj_facs_df, group='no_group') {
 
 
 draw_session_group_plots <- function(facs_df, type, test=F) {
-  for (treatment in c('RB')) {
+  for (treatment in c('DT')) {
   # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
     
     plot_list <- list()
     
     for (group in group_list) {
-      dt_facs_df <- facs_df %>%
+      treatment_facs_df <- facs_df %>%
         filter(Treatment==treatment & Group %in% paste0(group, c('H', 'L'))) 
       
       if (test==T) {
-        dt_facs_df <- dt_facs_df %>% 
+        treatment_facs_df <- treatment_facs_df %>% 
           slice(1:1)
       }
   
-      heat_map_df <- get_heat_map_df(dt_facs_df, group)
+      heat_map_df <- get_heat_map_df(treatment_facs_df, group)
       heatmap_plot <- draw_heat_map_plot(heat_map_df, type, paste0('Dual Task - ', group))
       plot_list[[length(plot_list)+1]] <- heatmap_plot
     } 
@@ -263,18 +298,19 @@ draw_session_group_plots <- function(facs_df, type, test=F) {
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
-# facs_df <<- read_data()
+### facs_df <<- read_data()
+# facs_df <<- read_new_data()
 
 
 # get_stats(facs_df)
 
 
-# draw_session_group_plots(facs_df, 'summative')
+draw_session_group_plots(facs_df, 'summative')
 # draw_session_group_plots(facs_df, 'percentage')
 
 
 
-draw_session_group_plots(facs_df, 'summative', test=T)
+# draw_session_group_plots(facs_df, 'summative', test=T)
 # draw_session_group_plots(facs_df, 'percentage', test=T)
 
 

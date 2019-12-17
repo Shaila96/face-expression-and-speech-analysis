@@ -4,6 +4,7 @@ all_session_plots_dir <- 'all_session_plots'
 log_dir <- 'log-files'
 
 data_dir <- 'data'
+final_data_dir <- 'final-data'
 curated_data_dir <- 'curated-data'
 
 # subj_data_dir <- 'subject-data'
@@ -23,6 +24,9 @@ facs_file_name <- 'Physiology+FACS+Gaze+Speech+Judges.csv'
 facs_gaze_speech_file_name <- 'facs_gaze_speech_data.csv'
 facs_judges_file_name <- 'facs_judges.csv'
 
+
+b_facs_file_name <- 'Batch_FACS.csv'
+c_facs_file_name <- 'Continuous_FACS.csv'
 
 
 font_style <- list(
