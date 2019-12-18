@@ -241,6 +241,9 @@ read_new_data <- function() {
   b_facs_df <- custom_read_csv(file.path(current_dir, data_dir, final_data_dir, b_facs_file_name))
   c_facs_df <- custom_read_csv(file.path(current_dir, data_dir, final_data_dir, c_facs_file_name))
   
+  print(unique(b_facs_df$Participant_ID))
+  print(unique(c_facs_df$Participant_ID))
+  
   facs_df <- rbind(b_facs_df, c_facs_df) %>% 
     mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
   
@@ -260,7 +263,7 @@ get_heat_map_df <- function(facs_df,
                                 subj='none', 
                                 plot_type='none', 
                                 treatment='none',
-                                export_file=T) {
+                                file_path=NULL) {
   ## Initializing matrix with all 0
   final_matrix = matrix(0, facs_size, facs_size)
   
@@ -268,10 +271,10 @@ get_heat_map_df <- function(facs_df,
   # convert_to_csv(facs_df[c(1:10), emotion_cols], 'facs_test.csv')
   
   for(i in 1:nrow(facs_df)){
-    # for(i in 1:500){
+    # for(i in 1:2){
     
     emotion_vals_by_row <- as.vector(unlist(facs_df[i, emotion_cols]))
-    # emotion_vals_by_row <- as.vector(c(0, 0, 1, 1, 0, 7, 1))
+    # emotion_vals_by_row <- as.vector(c(0, 0.2, 0, 0.5, 0.2, 0, 0.1))
     
     if (!any(is.na(emotion_vals_by_row))) {
       ## Outer product
@@ -328,13 +331,16 @@ get_heat_map_df <- function(facs_df,
            non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
   
   
-  if (export_file==T) {
-    file_path=file.path(current_dir,
-                        curated_data_dir,
-                        'Subj Data',
-                        get_full_group_name(group),
-                        treatment,
-                        paste0(subj, '.csv'))
+  if (!is.null(file_path)) {
+    # file_path=file.path(current_dir,
+    #                     curated_data_dir,
+    #                     'Subj Data',
+    #                     get_full_group_name(group),
+    #                     treatment,
+    #                     paste0(subj, '.csv'))
+    # 
+    # print(paste(current_dir, curated_data_dir))
+    # print(file_path)
     
     write.table(final_matrix,
                 file = file_path,

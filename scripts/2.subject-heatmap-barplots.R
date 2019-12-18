@@ -411,19 +411,20 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
   for (treatment in c('DT')) {
     
     for (group in group_list) {
+    # for (group in c('C')) {
       group_facs_df <- facs_df %>%
         filter(Group %in% paste0(group, c('H', 'L'))) 
         
       for (subj in levels(factor(group_facs_df$Participant_ID))) {
       # for (subj in c('T016', 'T064')) {
-      # for (subj in c('T064')) {
+      # for (subj in c('T005')) {
         
         subj_facs_df <- group_facs_df %>%
           filter(Participant_ID==subj & Treatment==treatment) 
         
         if (test==T) {
           subj_facs_df <- subj_facs_df %>% 
-            slice(1:10000)
+            slice(1:1000)
         }
         
         
@@ -431,7 +432,14 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
         area_plot <- draw_area_plot(subj_facs_df, subj, treatment, area_plot_type)
   
         
-        heat_map_df <- get_heat_map_df(subj_facs_df, export_file=T)
+        file_path=file.path(current_dir,
+                            curated_data_dir,
+                            'Subj Data',
+                            get_full_group_name(group),
+                            treatment,
+                            paste0(subj, '.csv'))
+        
+        heat_map_df <- get_heat_map_df(subj_facs_df, file_path=file_path)
         heatmap_plot <- draw_heat_map_plot(heat_map_df, heat_map_type, paste0(subj, ' - ', treatment))
         
         
@@ -631,33 +639,19 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
+#### facs_df <<- read_data()
 # facs_df <<- read_new_data()
 
 
-## draw_signal_heatmap_plots(facs_df, 'percentage')
-## draw_signal_heatmap_plots(facs_df, 'percentage', test=T)
+#### draw_signal_heatmap_plots(facs_df, heat_map_type='summative', test=T)
+draw_area_heatmap_plots(facs_df, heat_map_type='summative', area_plot_type='bar', test=T)
+
+
+#### draw_signal_heatmap_plots(facs_df, heat_map_type='summative')
+# draw_area_heatmap_plots(facs_df, heat_map_type='summative', area_plot_type='bar')
 
 
 
-## draw_area_heatmap_plots(facs_df, 'summative', 'area', test=T)
-## draw_area_heatmap_plots(facs_df, 'summative', 'area')
-
-
-
-## get_subj_co_occurance_matrices(facs_df, test=T)
-## get_subj_co_occurance_matrices(facs_df)
-
-
-## get_grp_co_occurance_matrices(facs_df, test=T)
-## get_grp_co_occurance_matrices(facs_df)
-
-
-## draw_signal_heatmap_plots(facs_df, 'summative', test=T)
-draw_area_heatmap_plots(facs_df, 'summative', 'bar', test=T)
-
-
-## draw_signal_heatmap_plots(facs_df, 'summative')
-# draw_area_heatmap_plots(facs_df, 'summative', 'bar')
 
 
 
@@ -667,12 +661,40 @@ draw_area_heatmap_plots(facs_df, 'summative', 'bar', test=T)
 # draw_panorama_heatmap(facs_df, 'no_text')
 
 
-### draw_panorama_heatmap(facs_df, 'summative')
-### draw_panorama_heatmap(facs_df, 'percentage')
+#### draw_panorama_heatmap(facs_df, 'summative')
+#### draw_panorama_heatmap(facs_df, 'percentage')
 
 
-### draw_panorama_heatmap(facs_df, 'summative', test=T)
-### draw_panorama_heatmap(facs_df, 'percentage', test=T)
+#### draw_panorama_heatmap(facs_df, 'summative', test=T)
+#### draw_panorama_heatmap(facs_df, 'percentage', test=T)
+
+
+
+
+
+
+
+
+
+
+
+
+#### draw_signal_heatmap_plots(facs_df, 'percentage')
+#### draw_signal_heatmap_plots(facs_df, 'percentage', test=T)
+
+
+
+#### draw_area_heatmap_plots(facs_df, 'summative', 'area', test=T)
+#### draw_area_heatmap_plots(facs_df, 'summative', 'area')
+
+
+
+#### get_subj_co_occurance_matrices(facs_df, test=T)
+#### get_subj_co_occurance_matrices(facs_df)
+
+
+#### get_grp_co_occurance_matrices(facs_df, test=T)
+#### get_grp_co_occurance_matrices(facs_df)
 
 
 

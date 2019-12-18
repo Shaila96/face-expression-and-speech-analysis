@@ -211,7 +211,7 @@ draw_session_group_plots <- function(facs_df, type, test=F) {
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
-### facs_df <<- read_data()
+#### facs_df <<- read_data()
 # facs_df <<- read_new_data()
 
 
@@ -219,12 +219,12 @@ draw_session_group_plots <- function(facs_df, type, test=F) {
 
 
 draw_session_group_plots(facs_df, 'summative')
-# draw_session_group_plots(facs_df, 'percentage')
+#### draw_session_group_plots(facs_df, 'percentage')
 
 
 
 # draw_session_group_plots(facs_df, 'summative', test=T)
-# draw_session_group_plots(facs_df, 'percentage', test=T)
+#### draw_session_group_plots(facs_df, 'percentage', test=T)
 
 
 
