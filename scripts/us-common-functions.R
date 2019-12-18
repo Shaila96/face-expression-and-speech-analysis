@@ -257,7 +257,7 @@ read_new_data <- function() {
 
 get_heat_map_matrix <- function(facs_df, group='no_group') {
   ## Initializing matrix with all 0
-  final_matrix = matrix(0, facs_size, facs_size) 
+  final_matrix = matrix(0, facs_size, facs_size)
   
   # print(facs_df[c(1:10), emotion_cols])
   # convert_to_csv(facs_df[c(1:10), emotion_cols], 'facs_test.csv')
@@ -276,8 +276,6 @@ get_heat_map_matrix <- function(facs_df, group='no_group') {
       ## Convert into upper triangle matrix
       current_matrix[lower.tri(current_matrix)] <- 0
       # print(current_matrix)
-      
-      
       
       #############################################################################
       #               NEW METHOD

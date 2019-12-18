@@ -131,90 +131,48 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
 
 
 
-get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_type='none', treatment='none') {
-
-  ## Initializing matrix with all 0
-  final_matrix = matrix(0, facs_size, facs_size)
-  
-  # print(subj_facs_df[c(1:10), emotion_cols])
-  # convert_to_csv(subj_facs_df[c(1:10), emotion_cols], 'facs_test.csv')
-  
-  for(i in 1:nrow(subj_facs_df)){
-    # for(i in 1:500){
-    
-    emotion_vals_by_row <- as.vector(unlist(subj_facs_df[i, emotion_cols]))
-    # emotion_vals_by_row <- as.vector(c(0, 0, 1, 1, 0, 7, 1))
-    
-    if (!any(is.na(emotion_vals_by_row))) {
-      ## Outer product
-      current_matrix <- outer(emotion_vals_by_row, emotion_vals_by_row)
-      # print(current_matrix)
-      
-      ## Convert into upper triangle matrix
-      current_matrix[lower.tri(current_matrix)] <- 0
-      # print(current_matrix)
-      
-      #############################################################################
-      #               NEW METHOD
-      #############################################################################
-      ## Make double of the upper traingle matrix
-      ## Add the upper and lower triagnle value
-      current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
-      # print(current_matrix)
-      #############################################################################
-      
-      
-      
-      #############################################################################
-      #               OLD METHOD
-      #############################################################################
-      ## Normalize with the sum of the elements of the matrix
-      # current_matrix <- current_matrix/sum(current_matrix)
-      # print(current_matrix)
-      #############################################################################
-      
-      ## Add to the final matrix
-      final_matrix <- final_matrix + current_matrix
-      # print(paste0('Step ', i, ': Sum Matrix -->'))
-      # print(final_matrix)
-    }
-  }
-  
-  ## Dividing matrix using 1000 and taking until 2 decimal
-  final_matrix = round(final_matrix, 2)
-  final_matrix[lower.tri(final_matrix)] <- NA
-  
-  if (plot_type=='panorama') {
-    dimnames(final_matrix) = list(panorama_emotion_cols, panorama_emotion_cols)
-  } else {
-    dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
-  }
-  
-  heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 
-    mutate(row_name=as.factor(row_name),
-           col_name=as.factor(col_name),
-           diagonal_val = ifelse(row_name==col_name, value, NA),
-           non_diagonal_upper_matrix_val = ifelse(row_name==col_name, -1, value),
-           non_diagonal_lower_matrix_val = ifelse(is.na(non_diagonal_upper_matrix_val), -1, 0),
-           diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
-           non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
-  
-  
-  file_path=file.path(current_dir,
-                      curated_data_dir,
-                      'Subj Data',
-                      get_full_group_name(group),
-                      treatment,
-                      paste0(subj, '.csv'))
-
-  write.table(final_matrix,
-              file = file_path,
-              row.names=T,
-              col.names=NA,
-              sep = ',')
-  
-  return(heat_map_df)
-}
+# get_heat_map_df <- function(subj_facs_df, 
+#                             group='no_group', 
+#                             subj='none', 
+#                             plot_type='none', 
+#                             treatment='none',
+#                             export_file=T) {
+#   
+#   # final_matrix=get_heat_map_matrix(subj_facs_df, group)
+#   
+#   if (plot_type=='panorama') {
+#     dimnames(final_matrix) = list(panorama_emotion_cols, panorama_emotion_cols)
+#   } else {
+#     dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
+#   }
+#   
+#   heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 
+#     mutate(row_name=as.factor(row_name),
+#            col_name=as.factor(col_name),
+#            diagonal_val = ifelse(row_name==col_name, value, NA),
+#            non_diagonal_upper_matrix_val = ifelse(row_name==col_name, -1, value),
+#            non_diagonal_lower_matrix_val = ifelse(is.na(non_diagonal_upper_matrix_val), -1, 0),
+#            diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
+#            non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
+#   
+#   if (export_file==T) {
+#     file_path=file.path(current_dir,
+#                         curated_data_dir,
+#                         'Subj Data',
+#                         get_full_group_name(group),
+#                         treatment,
+#                         paste0(subj, '.csv'))
+#     
+#     write.table(final_matrix,
+#                 file = file_path,
+#                 row.names=T,
+#                 col.names=NA,
+#                 sep = ',')
+#   }
+#   
+#   
+#   return(heat_map_df)
+# }
 
 
 
@@ -473,7 +431,7 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
         area_plot <- draw_area_plot(subj_facs_df, subj, treatment, area_plot_type)
   
         
-        heat_map_df <- get_heat_map_df(subj_facs_df)
+        heat_map_df <- get_heat_map_df(subj_facs_df, export_file=T)
         heatmap_plot <- draw_heat_map_plot(heat_map_df, heat_map_type, paste0(subj, ' - ', treatment))
         
         

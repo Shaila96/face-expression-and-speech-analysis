@@ -188,7 +188,7 @@ draw_session_group_plots <- function(facs_df, type, test=F) {
           slice(1:1)
       }
   
-      heat_map_df <- get_heat_map_df(treatment_facs_df, group)
+      heat_map_df <- get_heat_map_df(treatment_facs_df, group=group)
       heatmap_plot <- draw_heat_map_plot(heat_map_df, type, paste0('Dual Task - ', group))
       plot_list[[length(plot_list)+1]] <- heatmap_plot
     } 
