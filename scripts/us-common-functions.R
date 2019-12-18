@@ -210,3 +210,42 @@ get_axis_label <- function(label) {
   ))
 }
 
+
+
+
+
+
+
+
+
+read_data <- function() {
+  ## Making the df as global variable, as it takes a lot of time to load.
+  ## So, during one R session we load this df once
+  facs_df <- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>%
+    mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
+  # print(str(facs_df))
+  
+  ques_df <<- custom_read_csv(file.path(current_dir, data_dir, "Questionnaire Data.csv"))
+  
+  return(facs_df)
+}
+
+
+read_new_data <- function() {
+  ## Making the df as global variable, as it takes a lot of time to load.
+  ## So, during one R session we load this df once
+  b_facs_df <- custom_read_csv(file.path(current_dir, data_dir, final_data_dir, b_facs_file_name))
+  c_facs_df <- custom_read_csv(file.path(current_dir, data_dir, final_data_dir, c_facs_file_name))
+  
+  facs_df <- rbind(b_facs_df, c_facs_df) %>% 
+    mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
+  
+  print(str(facs_df))
+  View(facs_df)
+  
+  
+  ques_df <<- custom_read_csv(file.path(current_dir, data_dir, "Questionnaire Data.csv"))
+  
+  return(facs_df)
+}
+

@@ -467,8 +467,8 @@ draw_task_plot <- function(subj_facs_df) {
 
 draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test=F) {
   # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
-  for (treatment in c('RB', 'ST', 'PM', 'PR')) {
-    # for (treatment in c('DT')) {
+  # for (treatment in c('RB', 'ST', 'PM', 'PR')) {
+  for (treatment in c('DT')) {
     
     for (group in group_list) {
       group_facs_df <- facs_df %>%
@@ -636,8 +636,8 @@ draw_panaroma_heat_map_plot <- function(heat_map_df, subj_facs_df, type, plot_ti
 
 
 draw_panorama_heatmap <- function(facs_df, type, test=F) {
-  for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
-  # for (treatment in c('DT')) {
+  # for (treatment in c('RB', 'ST', 'PM', 'DT', 'PR')) {
+  for (treatment in c('DT')) {
     plot_list <- list()
     
     for (group in group_list) {
@@ -691,7 +691,7 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 #-------------------------#
 #-------Main Program------#
 #-------------------------#
-# facs_df <<- read_data()
+# facs_df <<- read_new_data()
 
 
 ## draw_signal_heatmap_plots(facs_df, 'percentage')
@@ -699,8 +699,8 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 
 
 
-# draw_area_heatmap_plots(facs_df, 'summative', 'area', test=T)
-# draw_area_heatmap_plots(facs_df, 'summative', 'area')
+## draw_area_heatmap_plots(facs_df, 'summative', 'area', test=T)
+## draw_area_heatmap_plots(facs_df, 'summative', 'area')
 
 
 
@@ -712,8 +712,8 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 ## get_grp_co_occurance_matrices(facs_df)
 
 
-# draw_signal_heatmap_plots(facs_df, 'summative', test=T)
-# draw_area_heatmap_plots(facs_df, 'summative', 'bar', test=T)
+## draw_signal_heatmap_plots(facs_df, 'summative', test=T)
+draw_area_heatmap_plots(facs_df, 'summative', 'bar', test=T)
 
 
 ## draw_signal_heatmap_plots(facs_df, 'summative')
@@ -723,14 +723,13 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 
 
 
+# draw_panorama_heatmap(facs_df, 'no_text', test=T)
+# draw_panorama_heatmap(facs_df, 'no_text')
 
 
 ### draw_panorama_heatmap(facs_df, 'summative')
 ### draw_panorama_heatmap(facs_df, 'percentage')
 
-
-# draw_panorama_heatmap(facs_df, 'no_text', test=T)
-draw_panorama_heatmap(facs_df, 'no_text')
 
 ### draw_panorama_heatmap(facs_df, 'summative', test=T)
 ### draw_panorama_heatmap(facs_df, 'percentage', test=T)
