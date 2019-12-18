@@ -255,7 +255,12 @@ read_new_data <- function() {
 
 
 
-get_heat_map_matrix <- function(facs_df, group='no_group') {
+get_heat_map_matrix <- function(facs_df, 
+                                group='no_group', 
+                                subj='none', 
+                                plot_type='none', 
+                                treatment='none',
+                                export_file=T) {
   ## Initializing matrix with all 0
   final_matrix = matrix(0, facs_size, facs_size)
   
@@ -307,6 +312,38 @@ get_heat_map_matrix <- function(facs_df, group='no_group') {
   final_matrix = round(final_matrix, 2)
   final_matrix[lower.tri(final_matrix)] <- NA
   
-  return(final_matrix)
+  if (plot_type=='panorama') {
+    dimnames(final_matrix) = list(panorama_emotion_cols, panorama_emotion_cols)
+  } else {
+    dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
+  }
+  
+  heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 
+    mutate(row_name=as.factor(row_name),
+           col_name=as.factor(col_name),
+           diagonal_val = ifelse(row_name==col_name, value, NA),
+           non_diagonal_upper_matrix_val = ifelse(row_name==col_name, -1, value),
+           non_diagonal_lower_matrix_val = ifelse(is.na(non_diagonal_upper_matrix_val), -1, 0),
+           diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
+           non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
+  
+  
+  if (export_file==T) {
+    file_path=file.path(current_dir,
+                        curated_data_dir,
+                        'Subj Data',
+                        get_full_group_name(group),
+                        treatment,
+                        paste0(subj, '.csv'))
+    
+    write.table(final_matrix,
+                file = file_path,
+                row.names=T,
+                col.names=NA,
+                sep = ',')
+  }
+  
+  
+  return(heat_map_df)
 }
 
