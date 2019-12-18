@@ -44,6 +44,10 @@ light_green <- 'rgb(39, 174, 96)'
 light_blue <- 'rgb(133, 193, 233)'
 light_grey <- 'rgb(204, 209, 209)'
 
+
+
+facs_size <- 7
+
 # subj_list_file_name <- 'subj_list.csv'
 
 
@@ -247,5 +251,64 @@ read_new_data <- function() {
   ques_df <<- custom_read_csv(file.path(current_dir, data_dir, "Questionnaire Data.csv"))
   
   return(facs_df)
+}
+
+
+
+get_heat_map_matrix <- function(facs_df, group='no_group') {
+  ## Initializing matrix with all 0
+  final_matrix = matrix(0, facs_size, facs_size) 
+  
+  # print(facs_df[c(1:10), emotion_cols])
+  # convert_to_csv(facs_df[c(1:10), emotion_cols], 'facs_test.csv')
+  
+  for(i in 1:nrow(facs_df)){
+    # for(i in 1:500){
+    
+    emotion_vals_by_row <- as.vector(unlist(facs_df[i, emotion_cols]))
+    # emotion_vals_by_row <- as.vector(c(0, 0, 1, 1, 0, 7, 1))
+    
+    if (!any(is.na(emotion_vals_by_row))) {
+      ## Outer product
+      current_matrix <- outer(emotion_vals_by_row, emotion_vals_by_row)
+      # print(current_matrix)
+      
+      ## Convert into upper triangle matrix
+      current_matrix[lower.tri(current_matrix)] <- 0
+      # print(current_matrix)
+      
+      
+      
+      #############################################################################
+      #               NEW METHOD
+      #############################################################################
+      ## Make double of the upper traingle matrix
+      ## Add the upper and lower triagnle value
+      current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
+      # print(current_matrix)
+      #############################################################################
+      
+      
+      
+      #############################################################################
+      #               OLD METHOD
+      #############################################################################
+      ## Normalize with the sum of the elements of the matrix
+      # current_matrix <- current_matrix/sum(current_matrix)
+      # print(current_matrix)
+      #############################################################################
+      
+      ## Add to the final matrix
+      final_matrix <- final_matrix + current_matrix
+      # print(paste0('Step ', i, ': Sum Matrix -->'))
+      # print(final_matrix)
+    }
+  }
+  
+  ## Dividing matrix using 1000 and taking until 2 decimal
+  final_matrix = round(final_matrix, 2)
+  final_matrix[lower.tri(final_matrix)] <- NA
+  
+  return(final_matrix)
 }
 

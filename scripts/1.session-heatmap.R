@@ -26,8 +26,6 @@ current_dir <- dirname(script_dir)
 setwd(current_dir)
 
 
-
-facs_size <- 7
 geom_text_size <- 4.5
 
 emotion_cols <- c('F_Angry',
@@ -156,58 +154,7 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
 
 
 get_heat_map_df <- function(subj_facs_df, group='no_group') {
-  ## Initializing matrix with all 0
-  final_matrix = matrix(0, facs_size, facs_size) 
-  
-  # print(subj_facs_df[c(1:10), emotion_cols])
-  # convert_to_csv(subj_facs_df[c(1:10), emotion_cols], 'facs_test.csv')
-  
-  for(i in 1:nrow(subj_facs_df)){
-  # for(i in 1:500){
-    
-    emotion_vals_by_row <- as.vector(unlist(subj_facs_df[i, emotion_cols]))
-    # emotion_vals_by_row <- as.vector(c(0, 0, 1, 1, 0, 7, 1))
-    
-    if (!any(is.na(emotion_vals_by_row))) {
-      ## Outer product
-      current_matrix <- outer(emotion_vals_by_row, emotion_vals_by_row)
-      # print(current_matrix)
-      
-      ## Convert into upper triangle matrix
-      current_matrix[lower.tri(current_matrix)] <- 0
-      # print(current_matrix)
-      
-      
-      
-      #############################################################################
-      #               NEW METHOD
-      #############################################################################
-      ## Make double of the upper traingle matrix
-      ## Add the upper and lower triagnle value
-      current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
-      # print(current_matrix)
-      #############################################################################
-      
-      
-      
-      #############################################################################
-      #               OLD METHOD
-      #############################################################################
-      ## Normalize with the sum of the elements of the matrix
-      # current_matrix <- current_matrix/sum(current_matrix)
-      # print(current_matrix)
-      #############################################################################
-      
-      ## Add to the final matrix
-      final_matrix <- final_matrix + current_matrix
-      # print(paste0('Step ', i, ': Sum Matrix -->'))
-      # print(final_matrix)
-    }
-  }
-  
-  ## Dividing matrix using 1000 and taking until 2 decimal
-  final_matrix = round(final_matrix, 2)
-  final_matrix[lower.tri(final_matrix)] <- NA
+  final_matrix=get_heat_map_matrix(subj_facs_df, group)
   dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
   
   heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 

@@ -24,8 +24,6 @@ current_dir <- dirname(script_dir)
 setwd(current_dir)
 
 
-
-facs_size <- 7
 geom_text_size <- 6
 
 emotion_cols <- c('F_Angry',
@@ -201,18 +199,6 @@ get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_ty
            diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
            non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
   
-  # View(heat_map_df)
-  # convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
-  # convert_to_csv(final_matrix, file.path(current_dir, curated_data_dir, paste0(subj, '.csv')), row_names=T)
-  
-  
-  ###########################################
-  # print(current_dir)
-  # print(curated_data_dir)
-  # print(group)
-  # print(get_group_abbr(group))
-  # print(treatment)
-  # print(subj)
   
   file_path=file.path(current_dir,
                       curated_data_dir,
@@ -221,15 +207,11 @@ get_heat_map_df <- function(subj_facs_df, group='no_group', subj='none', plot_ty
                       treatment,
                       paste0(subj, '.csv'))
 
-  # print(file_path)
   write.table(final_matrix,
               file = file_path,
               row.names=T,
               col.names=NA,
               sep = ',')
-  ###########################################
-  
-  
   
   return(heat_map_df)
 }
