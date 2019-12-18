@@ -255,7 +255,7 @@ read_new_data <- function() {
 
 
 
-get_heat_map_matrix <- function(facs_df, 
+get_heat_map_df <- function(facs_df, 
                                 group='no_group', 
                                 subj='none', 
                                 plot_type='none', 

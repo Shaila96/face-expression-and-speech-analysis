@@ -153,23 +153,23 @@ draw_heat_map_plot <- function(heat_map_df, type, plot_title) {
 
 
 
-get_heat_map_df <- function(subj_facs_df, group='no_group') {
-  final_matrix=get_heat_map_matrix(subj_facs_df, group)
-  dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
-  
-  heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 
-    mutate(row_name=as.factor(row_name),
-           col_name=as.factor(col_name),
-           diagonal_val = ifelse(row_name==col_name, value, NA),
-           non_diagonal_upper_matrix_val = ifelse(row_name==col_name, -1, value),
-           non_diagonal_lower_matrix_val = ifelse(is.na(non_diagonal_upper_matrix_val), -1, 0),
-           diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
-           non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
-  
-  # View(heat_map_df)
-  # convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
-  return(heat_map_df)
-}
+# get_heat_map_df <- function(subj_facs_df, group='no_group') {
+#   final_matrix=get_heat_map_matrix(subj_facs_df, group)
+#   dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
+#   
+#   heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 
+#     mutate(row_name=as.factor(row_name),
+#            col_name=as.factor(col_name),
+#            diagonal_val = ifelse(row_name==col_name, value, NA),
+#            non_diagonal_upper_matrix_val = ifelse(row_name==col_name, -1, value),
+#            non_diagonal_lower_matrix_val = ifelse(is.na(non_diagonal_upper_matrix_val), -1, 0),
+#            diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
+#            non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
+#   
+#   # View(heat_map_df)
+#   # convert_to_csv(heat_map_df, paste0('heat_map_dual_task_', group, '.csv'))
+#   return(heat_map_df)
+# }
 
 
 
