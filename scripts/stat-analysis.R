@@ -109,6 +109,10 @@ get_stats <- function(facs_df) {
   View(ques_df)
   
   
+  convert_to_csv(ques_df, file.path(current_dir, curated_data_dir, "biographic_questionnaire.csv"))
+  
+  
+  
   print(paste0("Mean age: ", mean(ques_df$Age)))
   print(paste0("SD age: ", sd(ques_df$Age)))
   
@@ -283,10 +287,10 @@ get_t_test_result <- function(mean_facs_df, type, remove_small_dataset=F) {
 # facs_df <<- read_data()
 
 
-# get_stats(facs_df)
+get_stats(facs_df)
 
 
-mean_facs_df <- get_mean_values(facs_df)
+# mean_facs_df <- get_mean_values(facs_df)
 
 
 # get_t_test_result(mean_facs_df, 'sum')

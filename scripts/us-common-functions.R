@@ -4,6 +4,7 @@ all_session_plots_dir <- 'all_session_plots'
 log_dir <- 'log-files'
 
 data_dir <- 'data'
+final_data_dir <- 'final-data'
 curated_data_dir <- 'curated-data'
 
 # subj_data_dir <- 'subject-data'
@@ -24,6 +25,9 @@ facs_gaze_speech_file_name <- 'facs_gaze_speech_data.csv'
 facs_judges_file_name <- 'facs_judges.csv'
 
 
+b_facs_file_name <- 'Batch_FACS.csv'
+c_facs_file_name <- 'Continuous_FACS.csv'
+
 
 font_style <- list(
   family = "Courier New, monospace",
@@ -39,6 +43,10 @@ light_violet <- 'rgb(210, 180, 222)'
 light_green <- 'rgb(39, 174, 96)'
 light_blue <- 'rgb(133, 193, 233)'
 light_grey <- 'rgb(204, 209, 209)'
+
+
+
+facs_size <- 7
 
 # subj_list_file_name <- 'subj_list.csv'
 
@@ -204,5 +212,157 @@ get_axis_label <- function(label) {
     title = label,
     titlefont = font_style
   ))
+}
+
+
+
+
+
+
+
+
+
+read_data <- function() {
+  ## Making the df as global variable, as it takes a lot of time to load.
+  ## So, during one R session we load this df once
+  facs_df <- custom_read_csv(file.path(current_dir, data_dir, facs_file_name)) %>%
+    mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
+  # print(str(facs_df))
+  
+  ques_df <<- custom_read_csv(file.path(current_dir, data_dir, "Questionnaire Data.csv"))
+  
+  return(facs_df)
+}
+
+
+read_new_data <- function() {
+  ## Making the df as global variable, as it takes a lot of time to load.
+  ## So, during one R session we load this df once
+  b_facs_df <- custom_read_csv(file.path(current_dir, data_dir, final_data_dir, b_facs_file_name))
+  c_facs_df <- custom_read_csv(file.path(current_dir, data_dir, final_data_dir, c_facs_file_name))
+  
+  print(unique(b_facs_df$Participant_ID))
+  print(unique(c_facs_df$Participant_ID))
+  
+  facs_df <- rbind(b_facs_df, c_facs_df) %>% 
+    mutate(Treatment_Time_New = Treatment_Time + F_Seconds%%1)  ## F_Seconds%%1 gives the deicmal point
+  
+  print(str(facs_df))
+  View(facs_df)
+  
+  
+  ques_df <<- custom_read_csv(file.path(current_dir, data_dir, "Questionnaire Data.csv"))
+  
+  return(facs_df)
+}
+
+
+
+get_heat_map_df <- function(facs_df, 
+                                group='no_group', 
+                                subj='none', 
+                                plot_type='none', 
+                                treatment='none',
+                                Test=F,
+                                file_path=NULL) {
+  ## Initializing matrix with all 0
+  final_matrix = matrix(0, facs_size, facs_size)
+  
+  # print(facs_df[c(1:10), emotion_cols])
+  # convert_to_csv(facs_df[c(1:10), emotion_cols], 'facs_test.csv')
+  
+  for(i in 1:nrow(facs_df)){
+    # for(i in 1:2){
+    
+    emotion_vals_by_row <- as.vector(unlist(facs_df[i, emotion_cols]))
+    
+  
+    ##################################################################
+    if (Test==T) {
+      emotion_vals_by_row <- as.vector(c(0, 0.2, 0, 0.5, 0.2, 0, 0.1))
+    }
+    # emotion_vals_by_row <- as.vector(c(0, 0.2, 0, 0.5, 0.2, 0, 0.1))
+    ##################################################################
+    
+    if (!any(is.na(emotion_vals_by_row))) {
+      ## Outer product
+      current_matrix <- outer(emotion_vals_by_row, emotion_vals_by_row)
+      # print(current_matrix)
+      
+      ## Convert into upper triangle matrix
+      current_matrix[lower.tri(current_matrix)] <- 0
+      # print(current_matrix)
+      
+      #############################################################################
+      #               NEW METHOD
+      #############################################################################
+      ## Make double of the upper traingle matrix
+      ## Add the upper and lower triagnle value
+      current_matrix[upper.tri(current_matrix, diag=F)] <- current_matrix[upper.tri(current_matrix, diag=F)]*2
+      # print(current_matrix)
+      #############################################################################
+      
+      
+      
+      #############################################################################
+      #               OLD METHOD
+      #############################################################################
+      ## Normalize with the sum of the elements of the matrix
+      # current_matrix <- current_matrix/sum(current_matrix)
+      # print(current_matrix)
+      #############################################################################
+      
+      ## Add to the final matrix
+      final_matrix <- final_matrix + current_matrix
+      # print(paste0('Step ', i, ': Sum Matrix -->'))
+      # print(final_matrix)
+    }
+  }
+  
+  ## Dividing matrix using 1000 and taking until 2 decimal
+  final_matrix = round(final_matrix, 2)
+  final_matrix[lower.tri(final_matrix)] <- NA
+  
+  
+  if (Test==T) {
+    print(final_matrix)
+  }
+  
+  if (plot_type=='panorama') {
+    dimnames(final_matrix) = list(panorama_emotion_cols, panorama_emotion_cols)
+  } else {
+    dimnames(final_matrix) = list(plot_emotion_cols, plot_emotion_cols)
+  }
+  
+  heat_map_df <- melt(final_matrix, varnames=c('row_name', 'col_name')) %>% 
+    mutate(row_name=as.factor(row_name),
+           col_name=as.factor(col_name),
+           diagonal_val = ifelse(row_name==col_name, value, NA),
+           non_diagonal_upper_matrix_val = ifelse(row_name==col_name, -1, value),
+           non_diagonal_lower_matrix_val = ifelse(is.na(non_diagonal_upper_matrix_val), -1, 0),
+           diagonal_percentage=round(100*diagonal_val/sum(value, na.rm=T), 2),
+           non_diagonal_upper_matrix_percentage=round(100*non_diagonal_upper_matrix_val/sum(value, na.rm=T), 2))
+  
+  
+  if (!is.null(file_path)) {
+    # file_path=file.path(current_dir,
+    #                     curated_data_dir,
+    #                     'Subj Data',
+    #                     get_full_group_name(group),
+    #                     treatment,
+    #                     paste0(subj, '.csv'))
+    # 
+    # print(paste(current_dir, curated_data_dir))
+    # print(file_path)
+    
+    write.table(final_matrix,
+                file = file_path,
+                row.names=T,
+                col.names=NA,
+                sep = ',')
+  }
+  
+  
+  return(heat_map_df)
 }
 
