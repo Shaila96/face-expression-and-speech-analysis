@@ -185,7 +185,7 @@ draw_session_group_plots <- function(facs_df, type, test=F) {
       
       if (test==T) {
         treatment_facs_df <- treatment_facs_df %>% 
-          slice(1:1)
+          slice(1:100)
       }
   
       heat_map_df <- get_heat_map_df(treatment_facs_df, group=group)

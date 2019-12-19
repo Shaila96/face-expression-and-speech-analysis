@@ -415,23 +415,24 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
       group_facs_df <- facs_df %>%
         filter(Group %in% paste0(group, c('H', 'L'))) 
         
-      for (subj in levels(factor(group_facs_df$Participant_ID))) {
-      # for (subj in c('T016', 'T064')) {
-      # for (subj in c('T005')) {
+      # for (subj in levels(factor(group_facs_df$Participant_ID))) {
+      for (subj in c('T016', 'T064')) {
+      # for (subj in c('T064')) {
+        
+        print(subj)
         
         subj_facs_df <- group_facs_df %>%
           filter(Participant_ID==subj & Treatment==treatment) 
         
         if (test==T) {
           subj_facs_df <- subj_facs_df %>% 
-            slice(1:1000)
+            slice(1:100)
         }
         
         
         task_plot <- draw_task_plot(subj_facs_df)
         area_plot <- draw_area_plot(subj_facs_df, subj, treatment, area_plot_type)
   
-        
         file_path=file.path(current_dir,
                             curated_data_dir,
                             'Subj Data',
@@ -644,11 +645,11 @@ draw_panorama_heatmap <- function(facs_df, type, test=F) {
 
 
 #### draw_signal_heatmap_plots(facs_df, heat_map_type='summative', test=T)
-draw_area_heatmap_plots(facs_df, heat_map_type='summative', area_plot_type='bar', test=T)
+# draw_area_heatmap_plots(facs_df, heat_map_type='summative', area_plot_type='bar', test=T)
 
 
 #### draw_signal_heatmap_plots(facs_df, heat_map_type='summative')
-# draw_area_heatmap_plots(facs_df, heat_map_type='summative', area_plot_type='bar')
+draw_area_heatmap_plots(facs_df, heat_map_type='summative', area_plot_type='bar')
 
 
 
