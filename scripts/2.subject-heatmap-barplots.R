@@ -416,12 +416,12 @@ draw_area_heatmap_plots <- function(facs_df, heat_map_type, area_plot_type, test
         filter(Group %in% paste0(group, c('H', 'L'))) 
         
       # for (subj in levels(factor(group_facs_df$Participant_ID))) {
-      for (subj in c('T016', 'T064')) {
-      # for (subj in c('T064')) {
+      # for (subj in c('T016', 'T064')) {
+      for (subj in c('T064')) {
         
         print(subj)
         
-        subj_facs_df <- group_facs_df %>%
+        subj_facs_df <- facs_df %>%
           filter(Participant_ID==subj & Treatment==treatment) 
         
         if (test==T) {

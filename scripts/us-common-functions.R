@@ -263,6 +263,7 @@ get_heat_map_df <- function(facs_df,
                                 subj='none', 
                                 plot_type='none', 
                                 treatment='none',
+                                Test=F,
                                 file_path=NULL) {
   ## Initializing matrix with all 0
   final_matrix = matrix(0, facs_size, facs_size)
@@ -274,7 +275,14 @@ get_heat_map_df <- function(facs_df,
     # for(i in 1:2){
     
     emotion_vals_by_row <- as.vector(unlist(facs_df[i, emotion_cols]))
+    
+  
+    ##################################################################
+    if (Test==T) {
+      emotion_vals_by_row <- as.vector(c(0, 0.2, 0, 0.5, 0.2, 0, 0.1))
+    }
     # emotion_vals_by_row <- as.vector(c(0, 0.2, 0, 0.5, 0.2, 0, 0.1))
+    ##################################################################
     
     if (!any(is.na(emotion_vals_by_row))) {
       ## Outer product
@@ -314,6 +322,11 @@ get_heat_map_df <- function(facs_df,
   ## Dividing matrix using 1000 and taking until 2 decimal
   final_matrix = round(final_matrix, 2)
   final_matrix[lower.tri(final_matrix)] <- NA
+  
+  
+  if (Test==T) {
+    print(final_matrix)
+  }
   
   if (plot_type=='panorama') {
     dimnames(final_matrix) = list(panorama_emotion_cols, panorama_emotion_cols)

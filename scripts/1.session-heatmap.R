@@ -230,7 +230,8 @@ draw_session_group_plots(facs_df, 'summative')
 
 
 
-
+#---------------- TEST CO-OCCURANCE MATRIX
+# get_heat_map_df(facs_df[1:1,], Test=T)
 
 
 
